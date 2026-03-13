@@ -1,10 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 
 const useForm = (initialValues, validationRules = {}) => {
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   const validate = useCallback((name, value) => {
     const rules = validationRules[name];
@@ -66,6 +67,8 @@ const useForm = (initialValues, validationRules = {}) => {
 
   const handleSubmit = useCallback((callback) => async (e) => {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setIsSubmitting(true);
 
     const isValid = validateAll();
@@ -77,6 +80,7 @@ const useForm = (initialValues, validationRules = {}) => {
       }
     }
 
+    submittingRef.current = false;
     setIsSubmitting(false);
   }, [validateAll, values]);
 

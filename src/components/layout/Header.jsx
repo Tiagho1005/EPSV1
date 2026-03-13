@@ -1,9 +1,11 @@
 import React from 'react';
-import { Menu, Bell, HeartPulse } from 'lucide-react';
+import { Menu, Bell, HeartPulse, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
 const Header = ({ onMenuToggle }) => {
   const { user } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
 
   const getInitials = (name) => {
     return name?.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() || 'U';
@@ -29,6 +31,13 @@ const Header = ({ onMenuToggle }) => {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-xl hover:bg-gray-100 transition-colors cursor-pointer"
+            aria-label={isDark ? 'Activar modo claro' : 'Activar modo oscuro'}
+          >
+            {isDark ? <Sun size={20} className="text-yellow-400" /> : <Moon size={20} className="text-gray-600" />}
+          </button>
           <button className="p-2 rounded-xl hover:bg-gray-100 transition-colors relative cursor-pointer">
             <Bell size={20} className="text-gray-600" />
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-error rounded-full" />

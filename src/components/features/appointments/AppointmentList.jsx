@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Filter, AlertTriangle, Clock } from 'lucide-react';
+import usePagination from '../../../hooks/usePagination';
+import Pagination from '../../ui/Pagination';
 import { useAppointments } from '../../../context/AppointmentContext';
 import { useToast } from '../../../context/ToastContext';
 import AppointmentCard from './AppointmentCard';
@@ -93,10 +95,13 @@ const AppointmentList = () => {
   const sorted = [...filtered].sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
   const hasActiveFilters = filterState !== 'todas' || filterDate !== 'todas' || filterSpecialty !== 'todas';
 
+  const pagination = usePagination(sorted, 8);
+
   const clearFilters = () => {
     setFilterState('todas');
     setFilterDate('todas');
     setFilterSpecialty('todas');
+    pagination.reset();
   };
 
   const handleCancel = async () => {
@@ -223,18 +228,21 @@ const AppointmentList = () => {
           } : undefined}
         />
       ) : (
-        <div className="grid gap-4">
-          {sorted.map(apt => (
-            <AppointmentCard 
-              key={apt.id} 
-              apt={apt} 
-              onDetail={setDetailModal}
-              onReschedule={(apt) => { setRescheduleModal(apt); setRescheduleDate(''); setRescheduleTime(''); setAvailableTimes([]); }}
-              onCancel={setCancelModal}
-              canModify={canModify}
-              canReschedule={canReschedule}
-            />
-          ))}
+        <div className="space-y-4">
+          <div className="grid gap-4">
+            {pagination.paginated.map(apt => (
+              <AppointmentCard
+                key={apt.id}
+                apt={apt}
+                onDetail={setDetailModal}
+                onReschedule={(apt) => { setRescheduleModal(apt); setRescheduleDate(''); setRescheduleTime(''); setAvailableTimes([]); }}
+                onCancel={setCancelModal}
+                canModify={canModify}
+                canReschedule={canReschedule}
+              />
+            ))}
+          </div>
+          <Pagination {...pagination} />
         </div>
       )}
 

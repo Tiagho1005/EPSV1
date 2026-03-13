@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Home, Calendar, CalendarPlus, FileText, Pill, User,
-  HelpCircle, LogOut, HeartPulse, X, AlertTriangle
+  HelpCircle, LogOut, HeartPulse, X, AlertTriangle, Sun, Moon
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { ROUTES } from '../../utils/constants';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
@@ -22,6 +23,7 @@ const menuItems = [
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { user, logout } = useAuth();
+  const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
@@ -111,6 +113,14 @@ const Sidebar = ({ isOpen, onClose }) => {
               <p className="text-xs text-purple-300 truncate">CC {user?.cedula}</p>
             </div>
           </div>
+          <button
+            onClick={toggleTheme}
+            className="flex items-center gap-2 w-full px-4 py-2 rounded-xl text-sm text-purple-200 hover:bg-white/10 hover:text-white transition-all cursor-pointer mb-1"
+            aria-label={isDark ? 'Activar modo claro' : 'Activar modo oscuro'}
+          >
+            {isDark ? <Sun size={18} className="text-yellow-400" /> : <Moon size={18} />}
+            <span>{isDark ? 'Modo Claro' : 'Modo Oscuro'}</span>
+          </button>
           <button
             onClick={() => setShowLogoutModal(true)}
             className="flex items-center gap-2 w-full px-4 py-2 rounded-xl text-sm text-purple-200 hover:bg-white/10 hover:text-white transition-all cursor-pointer"
