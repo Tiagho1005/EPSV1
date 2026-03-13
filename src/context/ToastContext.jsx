@@ -1,10 +1,21 @@
-import React, { createContext, useContext, useState, useCallback } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
 import Toast from '../components/ui/Toast';
 
 const ToastContext = createContext(null);
+export { ToastContext };
 
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
+  const removeToastRef = useRef(null);
+
+  const removeToast = useCallback((id) => {
+    setToasts(prev => prev.filter(t => t.id !== id));
+  }, []);
+
+  useEffect(() => {
+    removeToastRef.current = removeToast;
+  }, [removeToast]);
 
   const showToast = useCallback(({ type = 'info', title, message, duration = 5000 }) => {
     const id = Date.now() + Math.random();
@@ -12,17 +23,15 @@ export const ToastProvider = ({ children }) => {
 
     if (duration > 0) {
       setTimeout(() => {
-        removeToast(id);
+        if (removeToastRef.current) {
+           removeToastRef.current(id);
+        }
       }, duration);
     }
   }, []);
 
-  const removeToast = useCallback((id) => {
-    setToasts(prev => prev.filter(t => t.id !== id));
-  }, []);
-
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={{ showToast, removeToast }}>
       {children}
       {/* Toast container */}
       <div className="fixed top-4 right-4 z-[100] flex flex-col gap-3" aria-live="polite">
@@ -40,4 +49,3 @@ export const useToast = () => {
   return context;
 };
 
-export default ToastContext;

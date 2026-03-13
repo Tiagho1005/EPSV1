@@ -47,7 +47,7 @@ const DatePicker = ({
   useEffect(() => {
     if (value) {
       const [y, m] = value.split('-');
-      setView({ year: +y, month: +m - 1 });
+      setTimeout(() => setView({ year: +y, month: +m - 1 }), 0);
     }
   }, [value]);
 
@@ -291,7 +291,6 @@ const DatePicker = ({
           {mode === 'months' && (
             <div className="grid grid-cols-3 gap-2 mt-1">
               {MONTH_SHORT.map((m, idx) => {
-                const isCurrentMonth = view.month === idx && view.year === (selectedDate?.getFullYear() ?? -1);
                 const isSelectedMonth = selectedDate && selectedDate.getFullYear() === view.year && selectedDate.getMonth() === idx;
                 return (
                   <button

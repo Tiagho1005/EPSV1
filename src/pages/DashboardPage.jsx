@@ -22,11 +22,10 @@ const DashboardPage = () => {
   const { appointments, fetchAppointments, isLoading } = useAppointments();
   const { showToast } = useToast();
   const [takenMeds, setTakenMeds] = useState({});
-  const [loadingMeds, setLoadingMeds] = useState(false);
 
   useEffect(() => {
     fetchAppointments();
-  }, []);
+  }, [fetchAppointments]);
 
   // Get upcoming confirmed/pending appointments
   const upcomingAppointments = appointments

@@ -1,18 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Pill, Clock, Check, AlertTriangle, RefreshCw, Calendar,
-  User, ChevronRight, Info
-} from 'lucide-react';
-import Card from '../components/ui/Card';
-import Badge from '../components/ui/Badge';
+import { Pill, AlertTriangle } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Modal from '../components/ui/Modal';
-import Spinner from '../components/ui/Spinner';
 import Skeleton from '../components/ui/Skeleton';
 import EmptyState from '../components/ui/EmptyState';
+import MedicationCard from '../components/features/medications/MedicationCard';
 import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
-import { formatTime, formatDate, getDaysRemaining } from '../utils/formatters';
+import { formatTime, formatDate } from '../utils/formatters';
 
 const MedicationsPage = () => {
   const [medications, setMedications] = useState([]);
@@ -73,18 +68,6 @@ const MedicationsPage = () => {
     }
   };
 
-  const getDaysColor = (days) => {
-    if (days > 7) return 'text-success';
-    if (days > 3) return 'text-warning';
-    return 'text-error';
-  };
-
-  const getDaysBg = (days) => {
-    if (days > 7) return 'bg-green-50 border-green-200';
-    if (days > 3) return 'bg-amber-50 border-amber-200';
-    return 'bg-red-50 border-red-200';
-  };
-
   if (loading) {
     return (
       <div className="space-y-6">
@@ -113,93 +96,16 @@ const MedicationsPage = () => {
         />
       ) : (
         <div className="space-y-4">
-          {medications.map(med => {
-            const daysLeft = getDaysRemaining(med.fechaFin);
-            return (
-              <Card key={med.id} className="overflow-hidden">
-                {/* Header */}
-                <div className="flex items-start justify-between gap-3 mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl gradient-primary flex items-center justify-center shadow-lg">
-                      <Pill size={22} className="text-white" />
-                    </div>
-                    <div>
-                      <h3 className="font-semibold text-gray-800">{med.nombre} {med.dosis}</h3>
-                      <p className="text-sm text-gray-500">{med.presentacion} • {med.frecuencia}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className={`px-3 py-1.5 rounded-lg border text-xs font-semibold ${getDaysBg(daysLeft)} ${getDaysColor(daysLeft)}`}>
-                      {daysLeft} días restantes
-                    </div>
-                    <button
-                      onClick={() => setInfoModal(med)}
-                      className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
-                    >
-                      <Info size={18} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Prescribed by */}
-                <p className="text-xs text-gray-400 mb-3 flex items-center gap-1">
-                  <User size={12} /> Prescrito por {med.medico}
-                </p>
-
-                {/* Schedule */}
-                <div className="space-y-2">
-                  {med.horarios.map(h => {
-                    const key = `${med.id}-${h}`;
-                    const taken = takenDoses[key];
-                    return (
-                      <div
-                        key={h}
-                        className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
-                          taken ? 'bg-green-50 border-green-200' : 'bg-gray-50 border-gray-100'
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                            taken ? 'bg-success text-white' : 'bg-white border border-gray-200 text-gray-500'
-                          }`}>
-                            {taken ? <Check size={16} /> : <Clock size={14} />}
-                          </div>
-                          <div>
-                            <p className={`text-sm font-medium ${taken ? 'text-green-700' : 'text-gray-700'}`}>
-                              {formatTime(h)}
-                            </p>
-                            {taken && <p className="text-xs text-green-500">Tomado a las {taken}</p>}
-                          </div>
-                        </div>
-                        {!taken ? (
-                          <Button variant="primary" size="sm" onClick={() => handleMarkTaken(med, h)}>
-                            Marcar tomado
-                          </Button>
-                        ) : (
-                          <Badge variant="success" dot>Tomado</Badge>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Renewal button */}
-                {med.renovable && daysLeft <= 7 && (
-                  <div className="mt-4 pt-3 border-t border-gray-100">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      icon={<RefreshCw size={16} />}
-                      onClick={() => setRenewalModal(med)}
-                      className="text-primary-600 border-primary-200 hover:bg-primary-50"
-                    >
-                      Solicitar Renovación
-                    </Button>
-                  </div>
-                )}
-              </Card>
-            );
-          })}
+          {medications.map(med => (
+            <MedicationCard
+              key={med.id}
+              med={med}
+              takenDoses={takenDoses}
+              onMarkTaken={handleMarkTaken}
+              onRenew={setRenewalModal}
+              onInfo={setInfoModal}
+            />
+          ))}
         </div>
       )}
 

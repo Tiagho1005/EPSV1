@@ -1,8 +1,10 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import React, { createContext, useContext, useReducer } from 'react';
 import { api } from '../services/api';
 import useLocalStorage from '../hooks/useLocalStorage';
 
 const AppointmentContext = createContext(null);
+export { AppointmentContext };
 
 const initialState = {
   appointments: [],
@@ -121,4 +123,3 @@ export const useAppointments = () => {
   return context;
 };
 
-export default AppointmentContext;

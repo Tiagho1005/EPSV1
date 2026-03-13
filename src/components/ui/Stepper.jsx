@@ -10,7 +10,6 @@ const Stepper = ({ steps, currentStep, orientation = 'horizontal' }) => {
       {steps.map((step, index) => {
         const isCompleted = index < currentStep;
         const isCurrent = index === currentStep;
-        const isPending = index > currentStep;
         const IconComponent = step.icon ? LucideIcons[step.icon] : null;
 
         return (

@@ -53,7 +53,7 @@ const MainLayout = () => {
   useEffect(() => {
     if (!showWarning) return;
     if (countdown <= 0) {
-      handleTimeout();
+      setTimeout(() => handleTimeout(), 0);
       return;
     }
     const tick = setTimeout(() => setCountdown(c => c - 1), 1000);

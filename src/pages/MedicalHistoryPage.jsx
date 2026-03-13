@@ -10,7 +10,7 @@ import Skeleton from '../components/ui/Skeleton';
 import EmptyState from '../components/ui/EmptyState';
 import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
-import { formatDateFull, formatDate } from '../utils/formatters';
+import { formatDate } from '../utils/formatters';
 
 const MedicalHistoryPage = () => {
   const [history, setHistory] = useState([]);

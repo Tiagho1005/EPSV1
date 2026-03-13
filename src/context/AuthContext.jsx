@@ -1,8 +1,10 @@
+/* eslint-disable react-refresh/only-export-components */
 import { createContext, useContext, useReducer, useEffect } from 'react';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { api } from '../services/api';
 
 const AuthContext = createContext(null);
+export { AuthContext };
 
 const initialState = {
   user: null,
@@ -60,7 +62,7 @@ export const AuthProvider = ({ children }) => {
     } else {
       dispatch({ type: 'INIT_COMPLETE' });
     }
-  }, []);
+  }, [savedSession]);
 
   const login = async (cedula, password) => {
     try {
@@ -103,4 +105,3 @@ export const useAuth = () => {
   return context;
 };
 
-export default AuthContext;
