@@ -78,6 +78,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = () => {
+    // Invalidar token en backend (fire-and-forget)
+    api.logout();
     removeSavedSession();
     dispatch({ type: 'LOGOUT' });
   };

@@ -14,6 +14,26 @@ const ProfilePage = () => {
   const [uploadingPic, setUploadingPic] = useState(false);
   const fileInputRef = useRef(null);
 
+  /** Redimensiona y comprime la imagen a 200×200 JPEG al 80% de calidad */
+  const compressImage = (dataUrl) =>
+    new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => {
+        const SIZE = 200;
+        const canvas = document.createElement('canvas');
+        canvas.width = SIZE;
+        canvas.height = SIZE;
+        const ctx = canvas.getContext('2d');
+        // Recortar al centro para mantener proporción cuadrada
+        const min = Math.min(img.width, img.height);
+        const sx = (img.width - min) / 2;
+        const sy = (img.height - min) / 2;
+        ctx.drawImage(img, sx, sy, min, min, 0, 0, SIZE, SIZE);
+        resolve(canvas.toDataURL('image/jpeg', 0.8));
+      };
+      img.src = dataUrl;
+    });
+
   const handlePicChange = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -21,17 +41,17 @@ const ProfilePage = () => {
       showToast({ type: 'error', title: 'Formato inválido', message: 'Solo se permiten imágenes (JPG, PNG, etc.)' });
       return;
     }
-    if (file.size > 2 * 1024 * 1024) {
-      showToast({ type: 'error', title: 'Archivo muy grande', message: 'La imagen no puede superar 2 MB' });
+    if (file.size > 5 * 1024 * 1024) {
+      showToast({ type: 'error', title: 'Archivo muy grande', message: 'La imagen no puede superar 5 MB' });
       return;
     }
     setUploadingPic(true);
     const reader = new FileReader();
     reader.onload = async (ev) => {
       try {
-        const dataUrl = ev.target.result;
-        await api.updateProfile({ foto: dataUrl });
-        updateUser({ foto: dataUrl });
+        const compressed = await compressImage(ev.target.result);
+        await api.updateProfile({ fotoUrl: compressed });
+        updateUser({ foto: compressed });
         showToast({ type: 'success', title: 'Foto actualizada', message: 'Tu foto de perfil fue actualizada correctamente' });
       } catch (err) {
         showToast({ type: 'error', title: 'Error', message: err.message });

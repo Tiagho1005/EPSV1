@@ -1,24 +1,59 @@
-import React, { useEffect, useState } from 'react';
-import { Pill, AlertTriangle } from 'lucide-react';
-import Button from '../components/ui/Button';
-import Modal from '../components/ui/Modal';
+import React, { useEffect, useState, useCallback } from 'react';
 import Skeleton from '../components/ui/Skeleton';
-import EmptyState from '../components/ui/EmptyState';
-import MedicationCard from '../components/features/medications/MedicationCard';
 import { useToast } from '../context/ToastContext';
 import { api } from '../services/api';
-import { formatTime, formatDate } from '../utils/formatters';
+import usePagination from '../hooks/usePagination';
+
+// Feature Components
+import MedicationList from '../components/features/medications/MedicationList';
+import MedicationModals from '../components/features/medications/MedicationModals';
+
+const TAKEN_CACHE_KEY = 'eps_taken_doses';
+
+const loadTodayCache = () => {
+  try {
+    const raw = localStorage.getItem(TAKEN_CACHE_KEY);
+    if (!raw) return {};
+    const { date, data } = JSON.parse(raw);
+    const today = new Date().toISOString().split('T')[0];
+    return date === today ? data : {};
+  } catch {
+    return {};
+  }
+};
+
+const saveTodayCache = (map) => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+    localStorage.setItem(TAKEN_CACHE_KEY, JSON.stringify({ date: today, data: map }));
+  } catch {}
+};
 
 const MedicationsPage = () => {
   const [medications, setMedications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [takenDoses, setTakenDoses] = useState({});
-  const [confirmModal, setConfirmModal] = useState(null); // { med, horario }
+  const [takenDoses, setTakenDoses] = useState(loadTodayCache);
+  const [confirmModal, setConfirmModal] = useState(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [renewalModal, setRenewalModal] = useState(null);
   const [renewLoading, setRenewLoading] = useState(false);
   const [infoModal, setInfoModal] = useState(null);
   const { showToast } = useToast();
+
+  const pagination = usePagination(medications, 6);
+
+  const syncTakenDoses = useCallback(async () => {
+    try {
+      const serverMap = await api.getTodayTakenDoses();
+      setTakenDoses(prev => {
+        const merged = { ...prev, ...serverMap };
+        saveTodayCache(merged);
+        return merged;
+      });
+    } catch {
+      // Local cache used
+    }
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -32,7 +67,8 @@ const MedicationsPage = () => {
       }
     };
     load();
-  }, []);
+    syncTakenDoses();
+  }, [syncTakenDoses]);
 
   const handleMarkTaken = (med, horario) => {
     setConfirmModal({ med, horario });
@@ -43,8 +79,14 @@ const MedicationsPage = () => {
     const key = `${med.id}-${horario}`;
     setConfirmLoading(true);
     try {
-      await api.markMedicationTaken(med.id, horario);
-      setTakenDoses(prev => ({ ...prev, [key]: new Date().toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' }) }));
+      const result = await api.markMedicationTaken(med.id, horario);
+      const timestamp = result.timestamp || new Date().toISOString();
+      const formatted = new Date(timestamp).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+      setTakenDoses(prev => {
+        const updated = { ...prev, [key]: formatted };
+        saveTodayCache(updated);
+        return updated;
+      });
       showToast({ type: 'success', title: '✓ Dosis registrada', message: 'Dosis registrada correctamente' });
       setConfirmModal(null);
     } catch (err) {
@@ -59,7 +101,7 @@ const MedicationsPage = () => {
     setRenewLoading(true);
     try {
       await api.requestRenewal(renewalModal.id);
-      showToast({ type: 'success', title: 'Solicitud enviada', message: 'Tu solicitud de renovación ha sido procesada' });
+      showToast({ type: 'success', title: 'Solicitud enviada', message: 'Tu solicitud de renovación ha sido enviada al médico para su aprobación' });
       setRenewalModal(null);
     } catch (err) {
       showToast({ type: 'error', title: 'Error', message: err.message });
@@ -88,137 +130,30 @@ const MedicationsPage = () => {
         <p className="text-gray-500 text-sm">Gestiona tus medicamentos y registra tus dosis</p>
       </div>
 
-      {medications.length === 0 ? (
-        <EmptyState
-          icon="Pill"
-          title="Sin medicamentos activos"
-          description="No tienes medicamentos asignados actualmente"
-        />
-      ) : (
-        <div className="space-y-4">
-          {medications.map(med => (
-            <MedicationCard
-              key={med.id}
-              med={med}
-              takenDoses={takenDoses}
-              onMarkTaken={handleMarkTaken}
-              onRenew={setRenewalModal}
-              onInfo={setInfoModal}
-            />
-          ))}
-        </div>
-      )}
+      <MedicationList 
+        medications={medications}
+        takenDoses={takenDoses}
+        onMarkTaken={handleMarkTaken}
+        onRenew={setRenewalModal}
+        onInfo={setInfoModal}
+        pagination={pagination}
+      />
 
-      {/* Confirm Mark Taken Modal */}
-      <Modal
-        isOpen={!!confirmModal}
-        onClose={() => setConfirmModal(null)}
-        title="Confirmar dosis"
-        size="sm"
-        footer={
-          <>
-            <Button variant="outline" onClick={() => setConfirmModal(null)} disabled={confirmLoading}>Cancelar</Button>
-            <Button variant="primary" loading={confirmLoading} onClick={handleConfirmTaken}
-              className="gradient-primary border-0">
-              Confirmar
-            </Button>
-          </>
-        }
-      >
-        {confirmModal && (
-          <div className="text-center space-y-3">
-            <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mx-auto shadow-lg">
-              <Pill size={26} className="text-white" />
-            </div>
-            <p className="text-sm text-gray-600">
-              ¿Confirmas que tomaste
-            </p>
-            <p className="font-semibold text-gray-800">
-              {confirmModal.med.nombre} {confirmModal.med.dosis}
-            </p>
-            <p className="text-sm text-gray-500">
-              Horario: <span className="font-medium">{formatTime(confirmModal.horario)}</span>
-            </p>
-          </div>
-        )}
-      </Modal>
-
-      {/* Renewal Modal */}
-      <Modal
-        isOpen={!!renewalModal}
-        onClose={() => setRenewalModal(null)}
-        title="Solicitar Renovación"
-        size="sm"
-        footer={
-          <>
-            <Button variant="outline" onClick={() => setRenewalModal(null)}>Cancelar</Button>
-            <Button variant="primary" loading={renewLoading} onClick={handleRenewal}
-              className="gradient-primary border-0">
-              Confirmar Solicitud
-            </Button>
-          </>
-        }
-      >
-        {renewalModal && (
-          <div>
-            <p className="text-sm text-gray-600 mb-4">
-              ¿Deseas solicitar la renovación de la receta de <strong>{renewalModal.nombre} {renewalModal.dosis}</strong>?
-            </p>
-            <div className="p-3 bg-blue-50 rounded-xl border border-blue-100 text-sm text-blue-700">
-              <p>Tu solicitud será enviada al <strong>{renewalModal.medico}</strong> para su aprobación.</p>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      {/* Info Modal */}
-      <Modal
-        isOpen={!!infoModal}
-        onClose={() => setInfoModal(null)}
-        title="Información del Medicamento"
-        size="md"
-      >
-        {infoModal && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Medicamento</p>
-                <p className="text-sm font-medium">{infoModal.nombre} {infoModal.dosis}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Presentación</p>
-                <p className="text-sm font-medium">{infoModal.presentacion}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Frecuencia</p>
-                <p className="text-sm font-medium">{infoModal.frecuencia}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Prescrito por</p>
-                <p className="text-sm font-medium">{infoModal.medico}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Fecha inicio</p>
-                <p className="text-sm font-medium">{formatDate(infoModal.fechaInicio)}</p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Fecha fin</p>
-                <p className="text-sm font-medium">{formatDate(infoModal.fechaFin)}</p>
-              </div>
-            </div>
-            {infoModal.instrucciones && (
-              <div className="mt-4 p-4 bg-amber-50 rounded-xl border border-amber-100">
-                <p className="text-xs font-medium text-amber-600 uppercase tracking-wider mb-1 flex items-center gap-1">
-                  <AlertTriangle size={12} /> Instrucciones
-                </p>
-                <p className="text-sm text-amber-800">{infoModal.instrucciones}</p>
-              </div>
-            )}
-          </div>
-        )}
-      </Modal>
+      <MedicationModals 
+        confirmModal={confirmModal}
+        setConfirmModal={setConfirmModal}
+        confirmLoading={confirmLoading}
+        handleConfirmTaken={handleConfirmTaken}
+        renewalModal={renewalModal}
+        setRenewalModal={setRenewalModal}
+        renewLoading={renewLoading}
+        handleRenewal={handleRenewal}
+        infoModal={infoModal}
+        setInfoModal={setInfoModal}
+      />
     </div>
   );
 };
 
 export default MedicationsPage;
+

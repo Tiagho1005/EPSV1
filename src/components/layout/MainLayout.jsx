@@ -83,7 +83,7 @@ const MainLayout = () => {
   const breadcrumbs = getBreadcrumbs();
 
   return (
-    <div className="flex h-screen bg-background-light">
+    <div className="flex h-screen bg-gray-50 dark:bg-slate-950 transition-colors duration-300">
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       <div className="flex-1 flex flex-col min-h-screen overflow-hidden">

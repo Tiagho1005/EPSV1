@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useReducer } from 'react';
+import React, { createContext, useContext, useReducer, useCallback } from 'react';
 import { api } from '../services/api';
 import useLocalStorage from '../hooks/useLocalStorage';
 
@@ -39,7 +39,7 @@ export const AppointmentProvider = ({ children }) => {
   const [state, dispatch] = useReducer(appointmentReducer, initialState);
   const [savedAppointments, setSavedAppointments] = useLocalStorage('eps_appointments', null);
 
-  const fetchAppointments = async () => {
+  const fetchAppointments = useCallback(async () => {
     dispatch({ type: 'SET_LOADING' });
     try {
       const data = savedAppointments || await api.getAppointments();
@@ -48,9 +48,9 @@ export const AppointmentProvider = ({ children }) => {
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error.message });
     }
-  };
+  }, [savedAppointments, setSavedAppointments]);
 
-  const createAppointment = async (appointmentData) => {
+  const createAppointment = useCallback(async (appointmentData) => {
     dispatch({ type: 'SET_LOADING' });
     try {
       const newAppointment = await api.createAppointment(appointmentData);
@@ -62,9 +62,9 @@ export const AppointmentProvider = ({ children }) => {
       dispatch({ type: 'SET_ERROR', payload: error.message });
       throw error;
     }
-  };
+  }, [state.appointments, setSavedAppointments]);
 
-  const cancelAppointment = async (id, motivo) => {
+  const cancelAppointment = useCallback(async (id, motivo) => {
     dispatch({ type: 'SET_LOADING' });
     try {
       await api.cancelAppointment(id, motivo);
@@ -78,9 +78,9 @@ export const AppointmentProvider = ({ children }) => {
       dispatch({ type: 'SET_ERROR', payload: error.message });
       throw error;
     }
-  };
+  }, [state.appointments, setSavedAppointments]);
 
-  const rescheduleAppointment = async (id, newDate, newTime) => {
+  const rescheduleAppointment = useCallback(async (id, newDate, newTime) => {
     dispatch({ type: 'SET_LOADING' });
     try {
       await api.rescheduleAppointment(id, newDate, newTime);
@@ -100,7 +100,7 @@ export const AppointmentProvider = ({ children }) => {
       dispatch({ type: 'SET_ERROR', payload: error.message });
       throw error;
     }
-  };
+  }, [state.appointments, setSavedAppointments]);
 
   return (
     <AppointmentContext.Provider

@@ -19,12 +19,25 @@ const request = async (method, path, body = null, auth = true) => {
     const token = getToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
   }
-  const res = await fetch(`${BASE_URL}${path}`, {
-    method,
-    headers,
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const data = await res.json();
+
+  let res;
+  try {
+    res = await fetch(`${BASE_URL}${path}`, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    throw new Error('Error de conexión. Verifica tu conexión a internet.');
+  }
+
+  let data;
+  try {
+    data = await res.json();
+  } catch {
+    throw new Error('Respuesta inesperada del servidor. Intenta más tarde.');
+  }
+
   if (!res.ok) throw new Error(data.error || 'Error en el servidor');
   return data;
 };
@@ -36,6 +49,9 @@ export const api = {
 
   register: (userData) =>
     request('POST', '/auth/register', userData, false),
+
+  logout: () =>
+    request('POST', '/auth/logout', null, true).catch(() => {}), // silenciar si falla (token ya expirado)
 
   recoverPassword: async (identifier) => {
     _resetIdentifier = identifier;
@@ -64,6 +80,7 @@ export const api = {
 
   // Medications
   getMedications: () => request('GET', '/medications'),
+  getTodayTakenDoses: () => request('GET', '/medications/taken-today'),
   markMedicationTaken: (medicationId, horario) =>
     request('POST', `/medications/${medicationId}/taken`, { horario }),
   requestRenewal: (medicationId) =>

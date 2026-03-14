@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useState, useCallback, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
 import Toast from '../components/ui/Toast';
 
 const ToastContext = createContext(null);
@@ -7,25 +7,23 @@ export { ToastContext };
 
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
-  const removeToastRef = useRef(null);
+  // Mapa de timers activos: id → timeoutId — evita memory leaks al limpiar correctamente
+  const timersRef = useRef({});
 
   const removeToast = useCallback((id) => {
     setToasts(prev => prev.filter(t => t.id !== id));
+    clearTimeout(timersRef.current[id]);
+    delete timersRef.current[id];
   }, []);
-
-  useEffect(() => {
-    removeToastRef.current = removeToast;
-  }, [removeToast]);
 
   const showToast = useCallback(({ type = 'info', title, message, duration = 5000 }) => {
     const id = Date.now() + Math.random();
     setToasts(prev => [...prev, { id, type, title, message }]);
 
     if (duration > 0) {
-      setTimeout(() => {
-        if (removeToastRef.current) {
-           removeToastRef.current(id);
-        }
+      timersRef.current[id] = setTimeout(() => {
+        setToasts(prev => prev.filter(t => t.id !== id));
+        delete timersRef.current[id];
       }, duration);
     }
   }, []);
@@ -48,4 +46,3 @@ export const useToast = () => {
   if (!context) throw new Error('useToast must be used within ToastProvider');
   return context;
 };
-

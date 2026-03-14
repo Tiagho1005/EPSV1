@@ -9,7 +9,32 @@ if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 
 let store = null;
 
-const save = () => fs.writeFileSync(DB_PATH, JSON.stringify(store, null, 2));
+const BACKUP_DIR = path.join(DATA_DIR, 'backups');
+
+const backupDB = () => {
+  try {
+    if (!fs.existsSync(BACKUP_DIR)) fs.mkdirSync(BACKUP_DIR, { recursive: true });
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupPath = path.join(BACKUP_DIR, `db.backup.${timestamp}.json`);
+    fs.copyFileSync(DB_PATH, backupPath);
+    // Conservar solo los últimos 7 backups
+    const files = fs.readdirSync(BACKUP_DIR)
+      .filter(f => f.startsWith('db.backup'))
+      .sort();
+    if (files.length > 7) {
+      files.slice(0, files.length - 7).forEach(f => {
+        try { fs.unlinkSync(path.join(BACKUP_DIR, f)); } catch {}
+      });
+    }
+  } catch (err) {
+    console.error('[DB] Error al crear backup:', err.message);
+  }
+};
+
+const save = () => {
+  if (fs.existsSync(DB_PATH)) backupDB();
+  fs.writeFileSync(DB_PATH, JSON.stringify(store, null, 2));
+};
 
 const getStore = () => {
   if (!store) throw new Error('Store not initialized. Call initDB() first.');
@@ -19,6 +44,9 @@ const getStore = () => {
 const initDB = async () => {
   if (fs.existsSync(DB_PATH)) {
     store = JSON.parse(fs.readFileSync(DB_PATH, 'utf8'));
+    // Garantizar colecciones nuevas en bases de datos antiguas
+    if (!store.renewal_requests) store.renewal_requests = [];
+    if (!store.medication_taken_log) store.medication_taken_log = [];
     console.log('Base de datos cargada');
   } else {
     store = buildSeedData();

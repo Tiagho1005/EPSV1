@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 const { v4: uuidv4 } = require('uuid');
 const { getStore, save } = require('../config/db');
 const { sendRecoveryEmail } = require('../config/mailer');
+const auth = require('../middleware/auth');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-only-for-local-dev';
 const MAX_ATTEMPTS = 5;
@@ -37,7 +38,7 @@ router.post('/login', (req, res, next) => {
     user.intentos_fallidos = 0;
     user.bloqueado_hasta = null;
     save();
-    const token = jwt.sign({ userId: user.id, cedula: user.cedula, role: user.role || 'paciente' }, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ userId: user.id, cedula: user.cedula, role: user.role || 'paciente', jti: uuidv4() }, JWT_SECRET, { expiresIn: '24h' });
     res.json({ success: true, user: formatUser(user), token });
   } catch (err) { next(err); }
 });
@@ -100,6 +101,12 @@ router.post('/reset-password', (req, res, next) => {
     save();
     res.json({ success: true, message: 'Contrasena actualizada exitosamente' });
   } catch (err) { next(err); }
+});
+
+// Logout: invalida el token actual en la blacklist
+router.post('/logout', auth, (req, res) => {
+  if (req.user?.jti) auth.addToBlacklist(req.user.jti);
+  res.json({ success: true });
 });
 
 module.exports = router;
