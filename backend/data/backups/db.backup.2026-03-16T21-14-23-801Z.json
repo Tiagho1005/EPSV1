@@ -10,7 +10,15 @@
       "bloqueado_hasta": null,
       "reset_code": null,
       "reset_code_expires": null,
-      "fecha_registro": "2023-01-15"
+      "fecha_registro": "2023-01-15",
+      "email": "prueba123@gmail.com",
+      "celular": "3004682125",
+      "departamento": "Antioquia",
+      "municipio": "Medellín",
+      "direccion": "1 2#3 casa",
+      "nombre": "Santiago",
+      "apellido": "Montes",
+      "nombreCompleto": "Santiago Montes"
     },
     {
       "id": "746fd4f8-53eb-4156-8ce9-ddd16cb96e90",
@@ -47,6 +55,28 @@
       "reset_code": null,
       "reset_code_expires": null,
       "fecha_registro": "2026-03-13"
+    },
+    {
+      "id": "medico-1",
+      "cedula": "9876543210",
+      "nombre": "Carlos",
+      "apellido": "Mendoza",
+      "nombreCompleto": "Dr. Carlos Mendoza",
+      "email": "cmendoza@eps.com",
+      "celular": "3001234567",
+      "departamento": "Cundinamarca",
+      "municipio": "Bogotá",
+      "direccion": "Av. El Dorado #123",
+      "foto_url": null,
+      "password_hash": "$2a$10$Ce1Q1/TZt.aNbbD5UFWXlOFd1r1kH1nycfYr8b7QgnBetuoYSftZS",
+      "role": "medico",
+      "medico_id": "1",
+      "activo": true,
+      "intentos_fallidos": 0,
+      "bloqueado_hasta": null,
+      "reset_code": null,
+      "reset_code_expires": null,
+      "fecha_registro": "2026-01-01"
     }
   ],
   "specialties": [

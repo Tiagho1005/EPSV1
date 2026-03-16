@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   Home, Calendar, CalendarPlus, FileText, Pill, User,
-  HelpCircle, LogOut, HeartPulse, X, AlertTriangle, Sun, Moon
+  HelpCircle, LogOut, HeartPulse, X, AlertTriangle, Sun, Moon,
+  RefreshCw
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
@@ -10,7 +11,7 @@ import { ROUTES } from '../../utils/constants';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
 
-const menuItems = [
+const pacienteMenu = [
   { icon: Home, label: 'Inicio', path: ROUTES.DASHBOARD },
   { icon: Calendar, label: 'Mis Citas', path: ROUTES.APPOINTMENTS },
   { icon: CalendarPlus, label: 'Agendar Cita', path: ROUTES.NEW_APPOINTMENT },
@@ -21,11 +22,23 @@ const menuItems = [
   { icon: HelpCircle, label: 'Ayuda', path: ROUTES.HELP },
 ];
 
+const medicoMenu = [
+  { icon: Home, label: 'Inicio', path: ROUTES.MEDICO_DASHBOARD },
+  { icon: Calendar, label: 'Mis Consultas', path: ROUTES.MEDICO_APPOINTMENTS },
+  { icon: RefreshCw, label: 'Renovaciones', path: ROUTES.MEDICO_RENEWALS },
+  { icon: User, label: 'Mi Perfil', path: ROUTES.PROFILE },
+  { divider: true },
+  { icon: HelpCircle, label: 'Ayuda', path: ROUTES.HELP },
+];
+
 const Sidebar = ({ isOpen, onClose }) => {
   const { user, logout } = useAuth();
   const { isDark, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+
+  const menuItems = user?.role === 'medico' ? medicoMenu : pacienteMenu;
+  const portalLabel = user?.role === 'medico' ? 'Portal del Médico' : 'Portal del Afiliado';
 
   const handleLogoutConfirm = () => {
     setShowLogoutModal(false);
@@ -69,7 +82,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             </div>
             <div>
               <h1 className="text-lg font-bold tracking-tight">EPS</h1>
-              <p className="text-xs text-purple-200 -mt-0.5">Portal del Afiliado</p>
+              <p className="text-xs text-purple-200 -mt-0.5">{portalLabel}</p>
             </div>
           </div>
         </div>
@@ -110,7 +123,9 @@ const Sidebar = ({ isOpen, onClose }) => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{user?.nombreCompleto || 'Usuario'}</p>
-              <p className="text-xs text-purple-300 truncate">CC {user?.cedula}</p>
+              <p className="text-xs text-purple-300 truncate">
+                {user?.role === 'medico' ? 'Médico' : `CC ${user?.cedula}`}
+              </p>
             </div>
           </div>
           <button

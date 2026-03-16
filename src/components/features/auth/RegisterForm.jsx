@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { HeartPulse, User, IdCard, Phone, Mail, MapPin, Lock, ChevronLeft } from 'lucide-react';
 import { useToast } from '../../../context/ToastContext';
 import Input from '../../ui/Input';
@@ -12,7 +12,7 @@ import { departments } from '../../../data/departments';
 import { ROUTES } from '../../../utils/constants';
 import { api } from '../../../services/api';
 
-const RegisterForm = () => {
+const RegisterForm = ({ onNavigate }) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [step, setStep] = useState(1);
@@ -67,7 +67,7 @@ const RegisterForm = () => {
         title: '¡Cuenta creada!',
         message: '¡Cuenta creada exitosamente! Te enviamos un correo de confirmación',
       });
-      navigate(ROUTES.LOGIN);
+      if (onNavigate) onNavigate('login'); else navigate(ROUTES.LOGIN);
     } catch (error) {
       showToast({ type: 'error', title: 'Error', message: error.message });
     }
@@ -312,9 +312,13 @@ const RegisterForm = () => {
       <div className="text-center mt-6">
         <p className="text-sm text-gray-500">
           ¿Ya tienes cuenta?{' '}
-          <Link to={ROUTES.LOGIN} className="text-primary-600 font-semibold hover:text-primary-700 transition-colors">
+          <button
+            type="button"
+            onClick={() => onNavigate ? onNavigate('login') : navigate(ROUTES.LOGIN)}
+            className="text-primary-600 font-semibold hover:text-primary-700 transition-colors cursor-pointer"
+          >
             Iniciar Sesión
-          </Link>
+          </button>
         </p>
       </div>
     </>

@@ -153,6 +153,9 @@
 .dark .bg-white { background-color: #1e293b !important; }
 .dark .bg-gray-50 { background-color: #1e293b !important; }
 .dark .bg-gray-100 { background-color: #334155 !important; }
+.dark .hover\:bg-gray-50:hover { background-color: #334155 !important; }
+.dark .hover\:bg-gray-100:hover { background-color: #475569 !important; }
+.dark .hover\:bg-primary-50:hover { background-color: rgba(139, 92, 246, 0.2) !important; }
 .dark .bg-primary-50 { background-color: rgba(139, 92, 246, 0.15) !important; }
 .dark .bg-secondary-50 { background-color: rgba(6, 182, 212, 0.15) !important; }
 .dark .bg-success-light { background-color: rgba(34, 197, 94, 0.15) !important; }
@@ -197,6 +200,29 @@
 
 /* Background light override */
 .dark .bg-background-light { background-color: #0f172a !important; }
+
+/* Light surface — tarjetas que siempre tienen fondo claro (ej. login, registro) */
+.dark .light-surface { background-color: #ffffff !important; color: #1e293b !important; }
+.dark .light-surface .text-gray-800 { color: #1e293b !important; }
+.dark .light-surface .text-gray-700 { color: #374151 !important; }
+.dark .light-surface .text-gray-600 { color: #4b5563 !important; }
+.dark .light-surface .text-gray-500 { color: #6b7280 !important; }
+.dark .light-surface .text-gray-400 { color: #9ca3af !important; }
+.dark .light-surface .text-gray-300 { color: #d1d5db !important; }
+.dark .light-surface .border-gray-200 { border-color: #e5e7eb !important; }
+.dark .light-surface .border-gray-300 { border-color: #d1d5db !important; }
+.dark .light-surface .bg-gray-100 { background-color: #f3f4f6 !important; }
+.dark .light-surface .bg-gray-200 { background-color: #e5e7eb !important; }
+.dark .light-surface .bg-white { background-color: #ffffff !important; }
+.dark .light-surface .bg-error-light { background-color: #fef2f2 !important; }
+.dark .light-surface .text-primary-600 { color: #7c3aed !important; }
+.dark .light-surface .text-primary-700 { color: #6d28d9 !important; }
+.dark .light-surface input:not([type="checkbox"]),
+.dark .light-surface textarea,
+.dark .light-surface select { background-color: #ffffff !important; color: #1e293b !important; border-color: #d1d5db !important; }
+.dark .light-surface input::placeholder,
+.dark .light-surface textarea::placeholder { color: #9ca3af !important; }
+.dark .light-surface select option { background-color: #ffffff; color: #1e293b; }
 
 /* Force contrast for breadcrumbs and specific gray text */
 .dark .text-gray-300 { color: #475569 !important; }

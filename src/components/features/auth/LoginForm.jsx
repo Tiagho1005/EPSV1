@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { HeartPulse, IdCard, Lock, AlertTriangle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { HeartPulse, IdCard, Lock, AlertTriangle, Stethoscope } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
 import Input from '../../ui/Input';
@@ -9,7 +9,7 @@ import useForm from '../../../hooks/useForm';
 import { validators } from '../../../utils/validators';
 import { ROUTES, MAX_LOGIN_ATTEMPTS } from '../../../utils/constants';
 
-const LoginForm = ({ onError }) => {
+const LoginForm = ({ onError, portal = 'paciente', onNavigate }) => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const { showToast } = useToast();
@@ -54,7 +54,9 @@ const LoginForm = ({ onError }) => {
           <HeartPulse size={32} className="text-white" />
         </div>
         <h1 className="text-2xl font-bold text-gray-800">EPS</h1>
-        <p className="text-sm text-gray-500">Portal del Afiliado</p>
+        <p className="text-sm text-gray-500 flex items-center justify-center gap-1">
+          {portal === 'medico' ? <><Stethoscope size={14} /> Portal del Médico</> : 'Portal del Afiliado'}
+        </p>
       </div>
 
       {loginError && (
@@ -116,12 +118,13 @@ const LoginForm = ({ onError }) => {
       </form>
 
       <div className="mt-6 text-center">
-        <Link
-          to={ROUTES.RECOVER_PASSWORD}
-          className="text-sm text-primary-600 hover:text-primary-700 transition-colors"
+        <button
+          type="button"
+          onClick={() => onNavigate ? onNavigate('recover') : null}
+          className="text-sm text-primary-600 hover:text-primary-700 transition-colors cursor-pointer"
         >
           ¿Olvidaste tu contraseña?
-        </Link>
+        </button>
       </div>
 
       <div className="relative my-6">
@@ -136,12 +139,13 @@ const LoginForm = ({ onError }) => {
       <div className="text-center">
         <p className="text-sm text-gray-500">
           ¿No tienes cuenta?{' '}
-          <Link
-            to={ROUTES.REGISTER}
-            className="text-primary-600 font-semibold hover:text-primary-700 transition-colors"
+          <button
+            type="button"
+            onClick={() => onNavigate ? onNavigate('register') : null}
+            className="text-primary-600 font-semibold hover:text-primary-700 transition-colors cursor-pointer"
           >
             Crear cuenta
-          </Link>
+          </button>
         </p>
       </div>
     </>

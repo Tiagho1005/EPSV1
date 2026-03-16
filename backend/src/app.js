@@ -41,6 +41,7 @@ app.use('/api/doctors',        require('./routes/doctors'));
 app.use('/api/locations',      require('./routes/locations'));
 app.use('/api/specialties',    require('./routes/specialties'));
 app.use('/api/departments',    require('./routes/departments'));
+app.use('/api/medico',         require('./routes/medico'));
 
 app.get('/api/health', (_req, res) =>
   res.json({ status: 'ok', timestamp: new Date().toISOString() })

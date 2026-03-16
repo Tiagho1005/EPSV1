@@ -86,12 +86,15 @@ export const AuthProvider = ({ children }) => {
 
   const updateUser = (userData) => {
     dispatch({ type: 'UPDATE_USER', payload: userData });
-    if (savedSession) {
-      setSavedSession({
-        ...savedSession,
-        user: { ...savedSession.user, ...userData },
-      });
-    }
+    
+    // Persistir cambios en localStorage
+    setSavedSession(prev => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        user: { ...prev.user, ...userData }
+      };
+    });
   };
 
   return (

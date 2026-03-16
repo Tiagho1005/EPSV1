@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { HeartPulse, Mail, Lock, ChevronLeft, ArrowRight } from 'lucide-react';
 import { useToast } from '../../../context/ToastContext';
 import Input from '../../ui/Input';
@@ -10,7 +10,7 @@ import { validators } from '../../../utils/validators';
 import { ROUTES } from '../../../utils/constants';
 import { api } from '../../../services/api';
 
-const RecoverPasswordForm = () => {
+const RecoverPasswordForm = ({ onNavigate }) => {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const [step, setStep] = useState(0);
@@ -88,7 +88,7 @@ const RecoverPasswordForm = () => {
     try {
       await api.resetPassword(values.newPassword);
       showToast({ type: 'success', title: '¡Listo!', message: 'Tu contraseña ha sido actualizada exitosamente' });
-      navigate(ROUTES.LOGIN);
+      if (onNavigate) onNavigate('login'); else navigate(ROUTES.LOGIN);
     } catch (error) {
       showToast({ type: 'error', title: 'Error', message: error.message });
     } finally {
@@ -235,12 +235,13 @@ const RecoverPasswordForm = () => {
       )}
 
       <div className="text-center mt-6">
-        <Link
-          to={ROUTES.LOGIN}
-          className="inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 transition-colors"
+        <button
+          type="button"
+          onClick={() => onNavigate ? onNavigate('login') : navigate(ROUTES.LOGIN)}
+          className="inline-flex items-center gap-1 text-sm text-primary-600 hover:text-primary-700 transition-colors cursor-pointer"
         >
           <ChevronLeft size={16} /> Volver al inicio de sesión
-        </Link>
+        </button>
       </div>
     </>
   );

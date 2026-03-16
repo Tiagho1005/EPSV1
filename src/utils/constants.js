@@ -9,6 +9,9 @@ export const ROUTES = {
   MEDICATIONS: '/medications',
   PROFILE: '/profile',
   HELP: '/help',
+  MEDICO_DASHBOARD: '/medico/dashboard',
+  MEDICO_APPOINTMENTS: '/medico/appointments',
+  MEDICO_RENEWALS: '/medico/renewals',
 };
 
 export const APPOINTMENT_STATES = {

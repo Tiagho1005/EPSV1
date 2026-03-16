@@ -44,10 +44,10 @@ const NextAppointmentCard = ({ appointment, onDetailClick }) => {
           </Badge>
         </div>
         <div className="flex flex-wrap gap-2 mt-4">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-white hover:bg-white/20 border border-white/30"
+          <Button
+            variant="ghost"
+            size="sm"
+            className="!text-white hover:bg-white/20 border border-white/30"
             onClick={onDetailClick}
           >
             Ver detalles

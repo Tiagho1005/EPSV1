@@ -106,4 +106,20 @@ export const api = {
 
   // Departments (no auth — used in registration)
   getDepartments: () => request('GET', '/departments', null, false),
+
+  // Medico
+  getMedicoDashboard: () => request('GET', '/medico/dashboard'),
+  getMedicoAppointments: (date, status) => {
+    const params = new URLSearchParams();
+    if (date) params.set('date', date);
+    if (status) params.set('status', status);
+    const qs = params.toString();
+    return request('GET', `/medico/appointments${qs ? `?${qs}` : ''}`);
+  },
+  completeMedicoAppointment: (id, diagnostico, notas) =>
+    request('PATCH', `/medico/appointments/${id}/complete`, { diagnostico, notas }),
+  getMedicoPatient: (userId) => request('GET', `/medico/patients/${userId}`),
+  getMedicoRenewals: () => request('GET', '/medico/renewals'),
+  processMedicoRenewal: (id, action, nota) =>
+    request('PATCH', `/medico/renewals/${id}`, { action, nota }),
 };

@@ -10,13 +10,30 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-only-for-local-dev';
 const MAX_ATTEMPTS = 5;
 const BLOCK_MINUTES = 15;
 
-const formatUser = (u) => ({
-  id: u.id, cedula: u.cedula, nombre: u.nombre, apellido: u.apellido,
-  nombreCompleto: `${u.nombre} ${u.apellido}`, email: u.email, celular: u.celular,
-  fechaNacimiento: u.fecha_nacimiento, departamento: u.departamento,
-  municipio: u.municipio, direccion: u.direccion, fotoUrl: u.foto_url,
-  fechaRegistro: u.fecha_registro, activo: u.activo, role: u.role || 'paciente',
-});
+const formatUser = (u) => {
+  const nombre = u.nombre || '';
+  const apellido = u.apellido || '';
+  const nombreCompleto = u.nombreCompleto || `${nombre} ${apellido}`.trim();
+  
+  return {
+    id: u.id,
+    cedula: u.cedula,
+    nombre: nombre || nombreCompleto.split(' ')[0],
+    apellido: apellido,
+    nombreCompleto: nombreCompleto,
+    email: u.email,
+    celular: u.celular,
+    fechaNacimiento: u.fecha_nacimiento,
+    departamento: u.departamento,
+    municipio: u.municipio,
+    direccion: u.direccion,
+    fotoUrl: u.foto_url,
+    fechaRegistro: u.fecha_registro,
+    activo: u.activo,
+    role: u.role || 'paciente',
+    medicoId: u.medico_id || null,
+  };
+};
 
 router.post('/login', (req, res, next) => {
   try {
@@ -38,20 +55,55 @@ router.post('/login', (req, res, next) => {
     user.intentos_fallidos = 0;
     user.bloqueado_hasta = null;
     save();
-    const token = jwt.sign({ userId: user.id, cedula: user.cedula, role: user.role || 'paciente', jti: uuidv4() }, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ userId: user.id, cedula: user.cedula, role: user.role || 'paciente', medicoId: user.medico_id || null, jti: uuidv4() }, JWT_SECRET, { expiresIn: '24h' });
     res.json({ success: true, user: formatUser(user), token });
   } catch (err) { next(err); }
 });
 
 router.post('/register', (req, res, next) => {
   try {
-    const { cedula, password, nombre, apellido, email, celular, fechaNacimiento, departamento, municipio, direccion } = req.body;
+    const { cedula, password, nombre, apellido, nombreCompleto, email, celular, fechaNacimiento, departamento, municipio, direccion } = req.body;
     const store = getStore();
     if (store.users.find(u => u.cedula === cedula)) return res.status(400).json({ error: 'Esta cedula ya esta registrada. Deseas iniciar sesion?' });
     if (store.users.find(u => u.email === email)) return res.status(400).json({ error: 'Este correo ya esta registrado' });
+    
+    // Handle names
+    let finalNombre = nombre;
+    let finalApellido = apellido || '';
+    let finalNombreCompleto = nombreCompleto;
+
+    if (nombreCompleto && !nombre) {
+      const parts = nombreCompleto.trim().split(' ');
+      finalNombre = parts[0];
+      finalApellido = parts.slice(1).join(' ');
+    } else if (nombre && !nombreCompleto) {
+      finalNombreCompleto = `${nombre} ${finalApellido}`.trim();
+    }
+
     const id = uuidv4();
     const passwordHash = bcrypt.hashSync(password, 10);
-    store.users.push({ id, cedula, nombre, apellido: apellido || '', email, celular, fecha_nacimiento: fechaNacimiento, departamento: departamento || '', municipio: municipio || '', direccion: direccion || '', foto_url: null, password_hash: passwordHash, role: 'paciente', activo: true, intentos_fallidos: 0, bloqueado_hasta: null, reset_code: null, reset_code_expires: null, fecha_registro: new Date().toISOString().split('T')[0] });
+    store.users.push({
+      id,
+      cedula,
+      nombre: finalNombre,
+      apellido: finalApellido,
+      nombreCompleto: finalNombreCompleto,
+      email,
+      celular,
+      fecha_nacimiento: fechaNacimiento,
+      departamento: departamento || '',
+      municipio: municipio || '',
+      direccion: direccion || '',
+      foto_url: null,
+      password_hash: passwordHash,
+      role: 'paciente',
+      activo: true,
+      intentos_fallidos: 0,
+      bloqueado_hasta: null,
+      reset_code: null,
+      reset_code_expires: null,
+      fecha_registro: new Date().toISOString().split('T')[0]
+    });
     save();
     res.status(201).json({ success: true, message: 'Cuenta creada exitosamente!' });
   } catch (err) { next(err); }
