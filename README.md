@@ -98,6 +98,11 @@ npm run dev
 
 El frontend queda disponible en `http://localhost:5173`.
 
+> Si el backend está en una URL diferente, crea un archivo `.env` en la raíz del proyecto con:
+> ```env
+> VITE_API_URL=http://tu-backend.com/api
+> ```
+
 ---
 
 ## Credenciales de prueba

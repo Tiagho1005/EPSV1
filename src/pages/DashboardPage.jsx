@@ -35,6 +35,12 @@ const DashboardPage = () => {
       .finally(() => setMedsLoading(false));
   }, []);
 
+  useEffect(() => {
+    api.getTodayTakenDoses()
+      .then(data => setTakenMeds(data))
+      .catch(() => {});
+  }, []);
+
   // Get upcoming confirmed/pending appointments
   const upcomingAppointments = appointments
     .filter(a => a.estado === 'confirmada' || a.estado === 'pendiente')
@@ -46,9 +52,14 @@ const DashboardPage = () => {
     .filter(a => a.estado === 'completada')
     .slice(0, 3);
 
-  const handleMarkTaken = (medId, horario) => {
-    setTakenMeds(prev => ({ ...prev, [`${medId}-${horario}`]: true }));
-    showToast({ type: 'success', title: '✓ Dosis registrada', message: 'Dosis registrada correctamente' });
+  const handleMarkTaken = async (medId, horario) => {
+    try {
+      await api.markMedicationTaken(medId, horario);
+      setTakenMeds(prev => ({ ...prev, [`${medId}-${horario}`]: true }));
+      showToast({ type: 'success', title: '✓ Dosis registrada', message: 'Dosis registrada correctamente' });
+    } catch {
+      showToast({ type: 'error', title: 'Error', message: 'No se pudo registrar la dosis. Intenta de nuevo.' });
+    }
   };
 
   // Get today's medication schedule

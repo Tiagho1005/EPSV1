@@ -1,5 +1,5 @@
 /* eslint-disable react-refresh/only-export-components */
-import React, { createContext, useContext, useReducer, useCallback } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, useRef, useEffect } from 'react';
 import { api } from '../services/api';
 import useLocalStorage from '../hooks/useLocalStorage';
 
@@ -39,34 +39,42 @@ export const AppointmentProvider = ({ children }) => {
   const [state, dispatch] = useReducer(appointmentReducer, initialState);
   const [savedAppointments, setSavedAppointments] = useLocalStorage('eps_appointments', null);
 
+  const savedRef = useRef(savedAppointments);
+  const appointmentsRef = useRef(state.appointments);
+  const setSavedRef = useRef(setSavedAppointments);
+
+  useEffect(() => { savedRef.current = savedAppointments; }, [savedAppointments]);
+  useEffect(() => { appointmentsRef.current = state.appointments; }, [state.appointments]);
+  useEffect(() => { setSavedRef.current = setSavedAppointments; }, [setSavedAppointments]);
+
   const fetchAppointments = useCallback(async () => {
-    if (savedAppointments) {
-      dispatch({ type: 'SET_APPOINTMENTS', payload: savedAppointments });
+    if (savedRef.current) {
+      dispatch({ type: 'SET_APPOINTMENTS', payload: savedRef.current });
     } else {
       dispatch({ type: 'SET_LOADING' });
     }
     try {
       const data = await api.getAppointments();
       dispatch({ type: 'SET_APPOINTMENTS', payload: data });
-      setSavedAppointments(data);
+      setSavedRef.current(data);
     } catch (error) {
-      if (!savedAppointments) dispatch({ type: 'SET_ERROR', payload: error.message });
+      if (!savedRef.current) dispatch({ type: 'SET_ERROR', payload: error.message });
     }
-  }, [savedAppointments, setSavedAppointments]);
+  }, [dispatch]);
 
   const createAppointment = useCallback(async (appointmentData) => {
     dispatch({ type: 'SET_LOADING' });
     try {
       const newAppointment = await api.createAppointment(appointmentData);
       dispatch({ type: 'ADD_APPOINTMENT', payload: newAppointment });
-      const updated = [newAppointment, ...state.appointments];
-      setSavedAppointments(updated);
+      const updated = [newAppointment, ...appointmentsRef.current];
+      setSavedRef.current(updated);
       return newAppointment;
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error.message });
       throw error;
     }
-  }, [state.appointments, setSavedAppointments]);
+  }, [dispatch]);
 
   const cancelAppointment = useCallback(async (id, motivo) => {
     dispatch({ type: 'SET_LOADING' });
@@ -74,21 +82,21 @@ export const AppointmentProvider = ({ children }) => {
       await api.cancelAppointment(id, motivo);
       const update = { id, estado: 'cancelada', motivoCancelacion: motivo };
       dispatch({ type: 'UPDATE_APPOINTMENT', payload: update });
-      const updated = state.appointments.map(a =>
+      const updated = appointmentsRef.current.map(a =>
         a.id === id ? { ...a, ...update } : a
       );
-      setSavedAppointments(updated);
+      setSavedRef.current(updated);
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error.message });
       throw error;
     }
-  }, [state.appointments, setSavedAppointments]);
+  }, [dispatch]);
 
   const rescheduleAppointment = useCallback(async (id, newDate, newTime) => {
     dispatch({ type: 'SET_LOADING' });
     try {
       await api.rescheduleAppointment(id, newDate, newTime);
-      const apt = state.appointments.find(a => a.id === id);
+      const apt = appointmentsRef.current.find(a => a.id === id);
       const update = {
         id,
         fecha: newDate,
@@ -96,15 +104,15 @@ export const AppointmentProvider = ({ children }) => {
         reagendamientos: (apt?.reagendamientos || 0) + 1,
       };
       dispatch({ type: 'UPDATE_APPOINTMENT', payload: update });
-      const updated = state.appointments.map(a =>
+      const updated = appointmentsRef.current.map(a =>
         a.id === id ? { ...a, ...update } : a
       );
-      setSavedAppointments(updated);
+      setSavedRef.current(updated);
     } catch (error) {
       dispatch({ type: 'SET_ERROR', payload: error.message });
       throw error;
     }
-  }, [state.appointments, setSavedAppointments]);
+  }, [dispatch]);
 
   return (
     <AppointmentContext.Provider

@@ -31,5 +31,21 @@ module.exports = (_req, _res, next) => {
     _req.body = sanitized;
   }
 
+  if (_req.query && typeof _req.query === 'object') {
+    const sanitized = {};
+    for (const [key, value] of Object.entries(_req.query)) {
+      sanitized[key] = sanitizeValue(value);
+    }
+    _req.query = sanitized;
+  }
+
+  if (_req.params && typeof _req.params === 'object') {
+    const sanitized = {};
+    for (const [key, value] of Object.entries(_req.params)) {
+      sanitized[key] = sanitizeValue(value);
+    }
+    _req.params = sanitized;
+  }
+
   next();
 };

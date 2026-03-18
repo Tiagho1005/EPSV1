@@ -5,37 +5,14 @@ const { v4: uuidv4 } = require('uuid');
 const { getStore, save } = require('../config/db');
 const { sendRecoveryEmail } = require('../config/mailer');
 const auth = require('../middleware/auth');
+const { validatePassword } = require('../utils/validators');
+const formatUser = require('../utils/formatUser');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-only-for-local-dev';
 const MAX_ATTEMPTS = 5;
 const BLOCK_MINUTES = 15;
 
-const formatUser = (u) => {
-  const nombre = u.nombre || '';
-  const apellido = u.apellido || '';
-  const nombreCompleto = u.nombreCompleto || `${nombre} ${apellido}`.trim();
-  
-  return {
-    id: u.id,
-    cedula: u.cedula,
-    nombre: nombre || nombreCompleto.split(' ')[0],
-    apellido: apellido,
-    nombreCompleto: nombreCompleto,
-    email: u.email,
-    celular: u.celular,
-    fechaNacimiento: u.fecha_nacimiento,
-    departamento: u.departamento,
-    municipio: u.municipio,
-    direccion: u.direccion,
-    fotoUrl: u.foto_url,
-    fechaRegistro: u.fecha_registro,
-    activo: u.activo,
-    role: u.role || 'paciente',
-    medicoId: u.medico_id || null,
-  };
-};
-
-router.post('/login', (req, res, next) => {
+router.post('/login', async (req, res, next) => {
   try {
     const { cedula, password } = req.body;
     if (!cedula || !password) return res.status(400).json({ error: 'Cedula y contrasena son requeridas' });
@@ -44,7 +21,7 @@ router.post('/login', (req, res, next) => {
     if (!user) return res.status(401).json({ error: 'Este numero de cedula no esta registrado. Deseas crear una cuenta?' });
     if (!user.activo) return res.status(401).json({ error: 'Tu cuenta esta inactiva. Contacta a servicio al cliente' });
     if (user.bloqueado_hasta && new Date(user.bloqueado_hasta) > new Date()) return res.status(401).json({ error: 'Tu cuenta ha sido bloqueada temporalmente. Intenta de nuevo en 15 minutos o recupera tu contrasena' });
-    const valid = bcrypt.compareSync(password, user.password_hash);
+    const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
       const attempts = (user.intentos_fallidos || 0) + 1;
       user.intentos_fallidos = attempts;
@@ -60,10 +37,12 @@ router.post('/login', (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/register', (req, res, next) => {
+router.post('/register', async (req, res, next) => {
   try {
     const { cedula, password, nombre, apellido, nombreCompleto, email, celular, fechaNacimiento, departamento, municipio, direccion } = req.body;
     const store = getStore();
+    const pwError = validatePassword(password);
+    if (pwError) return res.status(400).json({ error: pwError });
     if (store.users.find(u => u.cedula === cedula)) return res.status(400).json({ error: 'Esta cedula ya esta registrada. Deseas iniciar sesion?' });
     if (store.users.find(u => u.email === email)) return res.status(400).json({ error: 'Este correo ya esta registrado' });
     
@@ -81,7 +60,7 @@ router.post('/register', (req, res, next) => {
     }
 
     const id = uuidv4();
-    const passwordHash = bcrypt.hashSync(password, 10);
+    const passwordHash = await bcrypt.hash(password, 10);
     store.users.push({
       id,
       cedula,
@@ -138,16 +117,29 @@ router.post('/verify-code', (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/reset-password', (req, res, next) => {
+router.post('/reset-password', async (req, res, next) => {
   try {
     const { resetToken, newPassword } = req.body;
     let payload;
     try { payload = jwt.verify(resetToken, JWT_SECRET); } catch { return res.status(400).json({ error: 'Token invalido o expirado' }); }
     if (payload.purpose !== 'reset') return res.status(400).json({ error: 'Token invalido' });
+    const pwError = validatePassword(newPassword);
+    if (pwError) return res.status(400).json({ error: pwError });
     const store = getStore();
     const user = store.users.find(u => u.id === payload.userId);
     if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
-    user.password_hash = bcrypt.hashSync(newPassword, 10);
+
+    // Verificar que no sea igual a las últimas N contraseñas
+    const history = user.password_history || [];
+    for (const oldHash of history) {
+      if (await bcrypt.compare(newPassword, oldHash)) {
+        return res.status(400).json({ error: 'No puedes reutilizar una contraseña reciente' });
+      }
+    }
+
+    // Guardar hash actual en historial antes de cambiarlo
+    user.password_history = [user.password_hash, ...history].slice(0, 5);
+    user.password_hash = await bcrypt.hash(newPassword, 10);
     user.reset_code = null;
     user.reset_code_expires = null;
     save();
