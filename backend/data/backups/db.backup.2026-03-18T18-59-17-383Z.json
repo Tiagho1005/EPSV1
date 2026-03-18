@@ -728,6 +728,30 @@
       "horario": "20:00",
       "taken_at": "2026-03-17T02:29:53.279Z",
       "fecha": "2026-03-17"
+    },
+    {
+      "id": "76cfd4ba-3bd9-4030-ba6c-182217f455f2",
+      "medication_id": "2",
+      "user_id": "1",
+      "horario": "07:00",
+      "taken_at": "2026-03-17T02:30:05.882Z",
+      "fecha": "2026-03-17"
+    },
+    {
+      "id": "512c7aa7-cdf6-40db-a7ae-6d6c5e911270",
+      "medication_id": "3",
+      "user_id": "1",
+      "horario": "08:00",
+      "taken_at": "2026-03-17T22:00:38.931Z",
+      "fecha": "2026-03-17"
+    },
+    {
+      "id": "7f6b0ffc-675a-4a2c-aab6-b8ddb70efd31",
+      "medication_id": "3",
+      "user_id": "1",
+      "horario": "16:00",
+      "taken_at": "2026-03-17T22:00:42.071Z",
+      "fecha": "2026-03-17"
     }
   ],
   "medical_history": [

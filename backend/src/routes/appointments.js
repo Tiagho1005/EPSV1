@@ -88,8 +88,30 @@ router.patch('/:id/reschedule', (req, res, next) => {
     const store = getStore();
     const apt = store.appointments.find(a => a.id === req.params.id && a.user_id === req.user.userId);
     if (!apt) return res.status(404).json({ error: 'Cita no encontrada' });
-    apt.fecha = req.body.newDate;
-    apt.hora = req.body.newTime;
+
+    const { newDate, newTime } = req.body;
+    if (!newDate || !newTime) return res.status(400).json({ error: 'newDate y newTime son requeridos' });
+
+    if (apt.estado === 'cancelada' || apt.estado === 'completada')
+      return res.status(400).json({ error: 'No puedes reagendar una cita cancelada o completada' });
+
+    if ((apt.reagendamientos || 0) >= 2)
+      return res.status(400).json({ error: 'Has alcanzado el límite de reagendamientos para esta cita' });
+
+    if (new Date(`${newDate}T${newTime}:00`) < new Date())
+      return res.status(400).json({ error: 'No puedes reagendar a una fecha pasada' });
+
+    const conflict = store.appointments.find(a =>
+      a.id !== apt.id &&
+      a.medico_id === apt.medico_id &&
+      a.fecha === newDate &&
+      a.hora === newTime &&
+      a.estado !== 'cancelada'
+    );
+    if (conflict) return res.status(409).json({ error: 'Este horario ya no está disponible. Selecciona otro horario.' });
+
+    apt.fecha = newDate;
+    apt.hora = newTime;
     apt.reagendamientos = (apt.reagendamientos || 0) + 1;
     save();
     res.json({ success: true });

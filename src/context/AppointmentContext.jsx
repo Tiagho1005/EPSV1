@@ -40,13 +40,17 @@ export const AppointmentProvider = ({ children }) => {
   const [savedAppointments, setSavedAppointments] = useLocalStorage('eps_appointments', null);
 
   const fetchAppointments = useCallback(async () => {
-    dispatch({ type: 'SET_LOADING' });
+    if (savedAppointments) {
+      dispatch({ type: 'SET_APPOINTMENTS', payload: savedAppointments });
+    } else {
+      dispatch({ type: 'SET_LOADING' });
+    }
     try {
-      const data = savedAppointments || await api.getAppointments();
+      const data = await api.getAppointments();
       dispatch({ type: 'SET_APPOINTMENTS', payload: data });
-      if (!savedAppointments) setSavedAppointments(data);
+      setSavedAppointments(data);
     } catch (error) {
-      dispatch({ type: 'SET_ERROR', payload: error.message });
+      if (!savedAppointments) dispatch({ type: 'SET_ERROR', payload: error.message });
     }
   }, [savedAppointments, setSavedAppointments]);
 

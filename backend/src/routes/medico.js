@@ -177,7 +177,7 @@ router.get('/renewals', (req, res, next) => {
             : { nombreCompleto: 'Desconocido', cedula: '' },
         };
       })
-      .sort((a, b) => b.fecha_solicitud.localeCompare(a.fecha_solicitud));
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
 
     res.json(requests);
   } catch (err) { next(err); }

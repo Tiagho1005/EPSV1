@@ -7,7 +7,7 @@ import Skeleton from '../components/ui/Skeleton';
 import EmptyState from '../components/ui/EmptyState';
 import { ROUTES } from '../utils/constants';
 import { getGreeting, getCurrentDateFormatted } from '../utils/formatters';
-import { medications } from '../data/medications';
+import { api } from '../services/api';
 
 // Feature Components
 import NextAppointmentCard from '../components/features/dashboard/NextAppointmentCard';
@@ -21,10 +21,19 @@ const DashboardPage = () => {
   const { appointments, fetchAppointments, isLoading } = useAppointments();
   const { showToast } = useToast();
   const [takenMeds, setTakenMeds] = useState({});
+  const [medications, setMedications] = useState([]);
+  const [medsLoading, setMedsLoading] = useState(true);
 
   useEffect(() => {
     fetchAppointments();
   }, [fetchAppointments]);
+
+  useEffect(() => {
+    api.getMedications()
+      .then(data => setMedications(data))
+      .catch(() => setMedications([]))
+      .finally(() => setMedsLoading(false));
+  }, []);
 
   // Get upcoming confirmed/pending appointments
   const upcomingAppointments = appointments
@@ -90,12 +99,16 @@ const DashboardPage = () => {
       {/* Two column layout */}
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Today's medications */}
-        <TodayMedicationsList 
-          medications={todayMeds}
-          takenMeds={takenMeds}
-          onMarkTaken={handleMarkTaken}
-          onSeeAll={() => navigate(ROUTES.MEDICATIONS)}
-        />
+        {medsLoading ? (
+          <Skeleton variant="card" />
+        ) : (
+          <TodayMedicationsList
+            medications={todayMeds}
+            takenMeds={takenMeds}
+            onMarkTaken={handleMarkTaken}
+            onSeeAll={() => navigate(ROUTES.MEDICATIONS)}
+          />
+        )}
 
         {/* Recent appointments */}
         <RecentActivityList 

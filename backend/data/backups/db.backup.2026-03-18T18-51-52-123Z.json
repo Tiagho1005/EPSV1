@@ -618,11 +618,11 @@
       "sede_id": "norte",
       "fecha": "2026-03-20",
       "hora": "08:00",
-      "estado": "confirmada",
+      "estado": "cancelada",
       "reagendamientos": 0,
       "notas": "",
       "diagnostico": null,
-      "motivo_cancelacion": null
+      "motivo_cancelacion": "Concierto"
     },
     {
       "id": "ec4654c3-d23c-439f-86ba-581860ec05f1",
@@ -640,6 +640,23 @@
       "notas": "",
       "diagnostico": null,
       "motivo_cancelacion": "zzz"
+    },
+    {
+      "id": "26a7709e-b035-4aae-b604-cbc9b49be223",
+      "user_id": "1",
+      "especialidad_id": "medicina-general",
+      "especialidad_nombre": "Medicina General",
+      "medico": "Dr. Carlos Mendoza",
+      "medico_id": "1",
+      "sede": "Sede Centro",
+      "sede_id": "centro",
+      "fecha": "2026-03-18",
+      "hora": "08:00",
+      "estado": "confirmada",
+      "reagendamientos": 0,
+      "notas": "",
+      "diagnostico": null,
+      "motivo_cancelacion": null
     }
   ],
   "medications": [
@@ -702,6 +719,38 @@
       "user_id": "1",
       "horario": "08:00",
       "taken_at": "2026-03-17T01:11:29.338Z",
+      "fecha": "2026-03-17"
+    },
+    {
+      "id": "665c06fc-b8bc-41dc-b346-6b5bec4be23a",
+      "medication_id": "1",
+      "user_id": "1",
+      "horario": "20:00",
+      "taken_at": "2026-03-17T02:29:53.279Z",
+      "fecha": "2026-03-17"
+    },
+    {
+      "id": "76cfd4ba-3bd9-4030-ba6c-182217f455f2",
+      "medication_id": "2",
+      "user_id": "1",
+      "horario": "07:00",
+      "taken_at": "2026-03-17T02:30:05.882Z",
+      "fecha": "2026-03-17"
+    },
+    {
+      "id": "512c7aa7-cdf6-40db-a7ae-6d6c5e911270",
+      "medication_id": "3",
+      "user_id": "1",
+      "horario": "08:00",
+      "taken_at": "2026-03-17T22:00:38.931Z",
+      "fecha": "2026-03-17"
+    },
+    {
+      "id": "7f6b0ffc-675a-4a2c-aab6-b8ddb70efd31",
+      "medication_id": "3",
+      "user_id": "1",
+      "horario": "16:00",
+      "taken_at": "2026-03-17T22:00:42.071Z",
       "fecha": "2026-03-17"
     }
   ],

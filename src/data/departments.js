@@ -1,3 +1,4 @@
+// Datos de respaldo — se usan en los formularios de registro y perfil para poblar el selector de departamentos/municipios
 export const departments = [
   {
     id: 'cundinamarca',
