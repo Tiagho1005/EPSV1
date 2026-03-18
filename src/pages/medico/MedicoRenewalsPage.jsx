@@ -17,7 +17,7 @@ const MedicoRenewalsPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [processing, setProcessing] = useState(null);
-  const [nota, setNota] = useState('');
+  const [notas, setNotas] = useState({});
   const [filter, setFilter] = useState('pendiente');
 
   const load = useCallback(async () => {
@@ -37,7 +37,7 @@ const MedicoRenewalsPage = () => {
   const handleAction = async (id, action) => {
     setProcessing(`${id}-${action}`);
     try {
-      await api.processMedicoRenewal(id, action, nota);
+      await api.processMedicoRenewal(id, action, notas[id] || '');
       showToast({
         type: 'success',
         title: action === 'approve' ? 'Renovación aprobada' : 'Solicitud rechazada',
@@ -45,7 +45,7 @@ const MedicoRenewalsPage = () => {
           ? 'El medicamento ha sido renovado por 30 días.'
           : 'La solicitud fue rechazada.',
       });
-      setNota('');
+      setNotas(prev => { const n = { ...prev }; delete n[id]; return n; });
       load();
     } catch (e) {
       showToast({ type: 'error', title: 'Error', message: e.message });
@@ -113,7 +113,7 @@ const MedicoRenewalsPage = () => {
                     </Badge>
                     <span className="text-xs text-gray-400 flex items-center gap-1">
                       <Calendar size={12} />
-                      {formatDateShort(renewal.fecha_solicitud)}
+                      {formatDateShort(renewal.created_at)}
                     </span>
                   </div>
 
@@ -143,8 +143,8 @@ const MedicoRenewalsPage = () => {
                   <div className="flex flex-col gap-2 min-w-[200px]">
                     <textarea
                       placeholder="Nota opcional..."
-                      value={nota}
-                      onChange={e => setNota(e.target.value)}
+                      value={notas[renewal.id] || ''}
+                      onChange={e => setNotas(prev => ({ ...prev, [renewal.id]: e.target.value }))}
                       rows={2}
                       className="w-full text-sm border border-gray-200 rounded-lg px-2 py-1.5 resize-none focus:outline-none focus:ring-2 focus:ring-primary-500/30"
                     />

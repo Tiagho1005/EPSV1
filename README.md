@@ -110,8 +110,14 @@ El frontend queda disponible en `http://localhost:5173`.
 | Portal | Cédula | Contraseña |
 |---|---|---|
 | Paciente | `1234567890` | `Password123!` |
-| Médico — Dr. Carlos Mendoza | `1000100001` | `Password123!` |
-| Médico — Dra. Laura Pérez | `1000100002` | `Password123!` |
+| Médico — Dr. Carlos Mendoza (Medicina General) | `1000100001` | `Password123!` |
+| Médico — Dra. Laura Pérez (Ginecología) | `1000100002` | `Password123!` |
+| Médico — Dra. Ana Martínez (Pediatría) | `1000100003` | `Password123!` |
+| Médico — Dr. Miguel Ángel Ruiz (Cardiología) | `1000100004` | `Password123!` |
+| Médico — Dr. Fernando Torres (Dermatología) | `1000100005` | `Password123!` |
+| Médico — Dr. Jorge Sánchez (Odontología) | `1000100006` | `Password123!` |
+| Médico — Dra. Patricia Gómez (Oftalmología) | `1000100007` | `Password123!` |
+| Médico — Dr. Andrés Ramírez (Psicología) | `1000100008` | `Password123!` |
 
 ---
 

@@ -87,7 +87,7 @@ router.get('/appointments', (req, res, next) => {
 // PATCH /medico/appointments/:id/complete
 router.patch('/appointments/:id/complete', (req, res, next) => {
   try {
-    const { diagnostico, notas } = req.body;
+    const { diagnostico, notas, recetas, examenes } = req.body;
     if (!diagnostico || !diagnostico.trim()) return res.status(400).json({ error: 'El diagnóstico es requerido' });
     const store = getStore();
     const apt = store.appointments.find(a => a.id === req.params.id && a.medico_id === req.user.medicoId);
@@ -110,8 +110,8 @@ router.patch('/appointments/:id/complete', (req, res, next) => {
       sede: apt.sede,
       diagnostico: diagnostico.trim(),
       notas: notas ? notas.trim() : '',
-      recetas: [],
-      examenes: [],
+      recetas: Array.isArray(recetas) ? recetas : [],
+      examenes: Array.isArray(examenes) ? examenes : [],
     });
 
     save();
@@ -153,6 +153,50 @@ router.get('/patients/:userId', (req, res, next) => {
       medicamentos: medications,
       citas: appointments,
     });
+  } catch (err) { next(err); }
+});
+
+// POST /medico/prescriptions
+router.post('/prescriptions', (req, res, next) => {
+  try {
+    const { userId, nombre, dosis, presentacion, frecuencia, horarios, duracionDias, instrucciones, renovable } = req.body;
+    const store = getStore();
+
+    const patient = store.users.find(u => u.id === userId);
+    if (!patient) return res.status(404).json({ error: 'Paciente no encontrado' });
+
+    const hasApt = store.appointments.some(a => a.user_id === userId && a.medico_id === req.user.medicoId);
+    if (!hasApt) return res.status(403).json({ error: 'No tienes acceso a este paciente' });
+
+    if (!nombre || !dosis || !frecuencia) return res.status(400).json({ error: 'nombre, dosis y frecuencia son requeridos' });
+    if (!Array.isArray(horarios) || horarios.length === 0) return res.status(400).json({ error: 'horarios debe ser un array no vacío' });
+    if (!duracionDias || typeof duracionDias !== 'number' || duracionDias <= 0) return res.status(400).json({ error: 'duracionDias debe ser un número positivo' });
+
+    const doctor = store.doctors.find(d => d.id === req.user.medicoId);
+    const today = new Date();
+    const fechaInicio = today.toISOString().split('T')[0];
+    const fechaFin = new Date(today);
+    fechaFin.setDate(fechaFin.getDate() + duracionDias);
+
+    const medication = {
+      id: uuidv4(),
+      user_id: userId,
+      nombre,
+      dosis,
+      presentacion: presentacion || 'Tableta',
+      frecuencia,
+      horarios,
+      fecha_inicio: fechaInicio,
+      fecha_fin: fechaFin.toISOString().split('T')[0],
+      medico: doctor?.nombre || '',
+      renovable: renovable || false,
+      instrucciones: instrucciones || '',
+    };
+
+    if (!store.medications) store.medications = [];
+    store.medications.push(medication);
+    save();
+    res.status(201).json(medication);
   } catch (err) { next(err); }
 });
 
@@ -202,9 +246,11 @@ router.patch('/renewals/:id', (req, res, next) => {
     renewal.fecha_respuesta = new Date().toISOString();
 
     if (action === 'approve') {
-      const newEnd = new Date();
-      newEnd.setDate(newEnd.getDate() + 30);
-      med.fecha_fin = newEnd.toISOString().split('T')[0];
+      const currentEnd = new Date(med.fecha_fin + 'T00:00:00');
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const baseDate = currentEnd > today ? currentEnd : today;
+      baseDate.setDate(baseDate.getDate() + 30);
+      med.fecha_fin = baseDate.toISOString().split('T')[0];
     }
 
     save();

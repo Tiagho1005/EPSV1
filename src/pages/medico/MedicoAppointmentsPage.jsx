@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Calendar, Clock, MapPin, User, CheckCircle, ChevronDown, ChevronUp, Search } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, CheckCircle, ChevronDown, ChevronUp, Search, Pill } from 'lucide-react';
 import { api } from '../../services/api';
 import { STATE_VARIANTS, STATE_LABELS } from '../../utils/constants';
 import { formatDateShort, formatTime } from '../../utils/formatters';
@@ -19,10 +19,14 @@ const MedicoAppointmentsPage = () => {
   const [statusFilter, setStatusFilter] = useState('');
   const [expandedId, setExpandedId] = useState(null);
   const [completing, setCompleting] = useState(null); // appointment id being completed
-  const [form, setForm] = useState({ diagnostico: '', notas: '' });
+  const [form, setForm] = useState({ diagnostico: '', notas: '', recetas: '', examenes: '' });
   const [submitting, setSubmitting] = useState(false);
   const [patientDetail, setPatientDetail] = useState(null);
   const [loadingPatient, setLoadingPatient] = useState(false);
+  const [prescribingApt, setPrescribingApt] = useState(null);
+  const [prescribingSubmitting, setPrescribingSubmitting] = useState(false);
+  const initialPrescriptionForm = { nombre: '', dosis: '', presentacion: 'Tableta', frecuencia: '', horarios: '', duracionDias: '', instrucciones: '', renovable: false };
+  const [prescriptionForm, setPrescriptionForm] = useState(initialPrescriptionForm);
 
   const load = useCallback(async () => {
     try {
@@ -61,15 +65,43 @@ const MedicoAppointmentsPage = () => {
     if (!form.diagnostico.trim()) return;
     setSubmitting(true);
     try {
-      await api.completeMedicoAppointment(completing, form.diagnostico, form.notas);
+      const recetasArray = form.recetas.split('\n').map(r => r.trim()).filter(Boolean);
+      const examenesArray = form.examenes.split('\n').map(e => e.trim()).filter(Boolean);
+      await api.completeMedicoAppointment(completing, form.diagnostico, form.notas, recetasArray, examenesArray);
       showToast({ type: 'success', title: 'Cita completada', message: 'El diagnóstico fue registrado exitosamente.' });
       setCompleting(null);
-      setForm({ diagnostico: '', notas: '' });
+      setForm({ diagnostico: '', notas: '', recetas: '', examenes: '' });
       load();
     } catch (e) {
       showToast({ type: 'error', title: 'Error', message: e.message });
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handlePrescribe = async () => {
+    const { nombre, dosis, frecuencia, horarios, duracionDias } = prescriptionForm;
+    if (!nombre.trim() || !dosis.trim() || !frecuencia.trim() || !horarios.trim() || !duracionDias) return;
+    setPrescribingSubmitting(true);
+    try {
+      await api.prescribeMedication({
+        userId: prescribingApt.paciente.id,
+        nombre: nombre.trim(),
+        dosis: dosis.trim(),
+        presentacion: prescriptionForm.presentacion,
+        frecuencia: frecuencia.trim(),
+        horarios: horarios.split(',').map(h => h.trim()).filter(Boolean),
+        duracionDias: Number(duracionDias),
+        instrucciones: prescriptionForm.instrucciones.trim(),
+        renovable: prescriptionForm.renovable,
+      });
+      showToast({ type: 'success', title: 'Medicamento prescrito', message: 'El medicamento fue agregado al paciente.' });
+      setPrescribingApt(null);
+      setPrescriptionForm(initialPrescriptionForm);
+    } catch (e) {
+      showToast({ type: 'error', title: 'Error', message: e.message });
+    } finally {
+      setPrescribingSubmitting(false);
     }
   };
 
@@ -191,15 +223,25 @@ const MedicoAppointmentsPage = () => {
                         </div>
                       )}
 
-                      {/* Complete button */}
-                      {apt.estado === 'confirmada' && (
-                        <div className="flex gap-2">
+                      {/* Action buttons */}
+                      {(apt.estado === 'confirmada' || apt.estado === 'completada') && (
+                        <div className="flex gap-2 flex-wrap">
+                          {apt.estado === 'confirmada' && (
+                            <Button
+                              size="sm"
+                              icon={<CheckCircle size={16} />}
+                              onClick={() => { setCompleting(apt.id); setForm({ diagnostico: '', notas: '', recetas: '', examenes: '' }); }}
+                            >
+                              Completar Consulta
+                            </Button>
+                          )}
                           <Button
                             size="sm"
-                            icon={<CheckCircle size={16} />}
-                            onClick={() => { setCompleting(apt.id); setForm({ diagnostico: '', notas: '' }); }}
+                            variant="outline"
+                            icon={<Pill size={16} />}
+                            onClick={() => { setPrescribingApt(apt); setPrescriptionForm(initialPrescriptionForm); }}
                           >
-                            Completar Consulta
+                            Prescribir Medicamento
                           </Button>
                         </div>
                       )}
@@ -255,6 +297,135 @@ const MedicoAppointmentsPage = () => {
               className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 resize-none"
             />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Recetas (una por línea)</label>
+            <textarea
+              value={form.recetas}
+              onChange={e => setForm(f => ({ ...f, recetas: e.target.value }))}
+              rows={3}
+              placeholder="Ej: Losartán 50mg - 1 tableta cada 12 horas por 30 días"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 resize-none"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Exámenes ordenados (uno por línea)</label>
+            <textarea
+              value={form.examenes}
+              onChange={e => setForm(f => ({ ...f, examenes: e.target.value }))}
+              rows={3}
+              placeholder="Ej: Hemograma completo"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 resize-none"
+            />
+          </div>
+        </div>
+      </Modal>
+      {/* Prescription modal */}
+      <Modal
+        isOpen={!!prescribingApt}
+        onClose={() => { setPrescribingApt(null); setPrescriptionForm(initialPrescriptionForm); }}
+        title="Prescribir Medicamento"
+        size="md"
+        footer={
+          <>
+            <Button variant="outline" onClick={() => setPrescribingApt(null)}>Cancelar</Button>
+            <Button
+              onClick={handlePrescribe}
+              loading={prescribingSubmitting}
+              disabled={!prescriptionForm.nombre.trim() || !prescriptionForm.dosis.trim() || !prescriptionForm.frecuencia.trim() || !prescriptionForm.horarios.trim() || !prescriptionForm.duracionDias}
+              icon={<Pill size={16} />}
+            >
+              Prescribir
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Nombre <span className="text-error">*</span></label>
+              <input
+                type="text"
+                value={prescriptionForm.nombre}
+                onChange={e => setPrescriptionForm(f => ({ ...f, nombre: e.target.value }))}
+                placeholder="Ej: Losartán"
+                className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Dosis <span className="text-error">*</span></label>
+              <input
+                type="text"
+                value={prescriptionForm.dosis}
+                onChange={e => setPrescriptionForm(f => ({ ...f, dosis: e.target.value }))}
+                placeholder="Ej: 50mg"
+                className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Presentación</label>
+              <select
+                value={prescriptionForm.presentacion}
+                onChange={e => setPrescriptionForm(f => ({ ...f, presentacion: e.target.value }))}
+                className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+              >
+                {['Tableta', 'Cápsula', 'Jarabe', 'Inyección', 'Crema', 'Otro'].map(p => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Duración (días) <span className="text-error">*</span></label>
+              <input
+                type="number"
+                min="1"
+                value={prescriptionForm.duracionDias}
+                onChange={e => setPrescriptionForm(f => ({ ...f, duracionDias: e.target.value }))}
+                placeholder="Ej: 30"
+                className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+              />
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Frecuencia <span className="text-error">*</span></label>
+            <input
+              type="text"
+              value={prescriptionForm.frecuencia}
+              onChange={e => setPrescriptionForm(f => ({ ...f, frecuencia: e.target.value }))}
+              placeholder="Ej: Cada 8 horas"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Horarios <span className="text-error">*</span></label>
+            <input
+              type="text"
+              value={prescriptionForm.horarios}
+              onChange={e => setPrescriptionForm(f => ({ ...f, horarios: e.target.value }))}
+              placeholder="Ej: 08:00, 16:00, 00:00"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Instrucciones</label>
+            <textarea
+              value={prescriptionForm.instrucciones}
+              onChange={e => setPrescriptionForm(f => ({ ...f, instrucciones: e.target.value }))}
+              rows={2}
+              placeholder="Ej: Tomar con alimentos"
+              className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 resize-none"
+            />
+          </div>
+          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={prescriptionForm.renovable}
+              onChange={e => setPrescriptionForm(f => ({ ...f, renovable: e.target.checked }))}
+              className="rounded"
+            />
+            Permite renovación
+          </label>
         </div>
       </Modal>
     </div>

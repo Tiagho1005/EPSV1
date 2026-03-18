@@ -116,10 +116,11 @@ export const api = {
     const qs = params.toString();
     return request('GET', `/medico/appointments${qs ? `?${qs}` : ''}`);
   },
-  completeMedicoAppointment: (id, diagnostico, notas) =>
-    request('PATCH', `/medico/appointments/${id}/complete`, { diagnostico, notas }),
+  completeMedicoAppointment: (id, diagnostico, notas, recetas, examenes) =>
+    request('PATCH', `/medico/appointments/${id}/complete`, { diagnostico, notas, recetas, examenes }),
   getMedicoPatient: (userId) => request('GET', `/medico/patients/${userId}`),
   getMedicoRenewals: () => request('GET', '/medico/renewals'),
   processMedicoRenewal: (id, action, nota) =>
     request('PATCH', `/medico/renewals/${id}`, { action, nota }),
+  prescribeMedication: (data) => request('POST', '/medico/prescriptions', data),
 };

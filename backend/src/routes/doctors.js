@@ -17,12 +17,16 @@ router.get('/:id/available-times', (req, res, next) => {
   try {
     const { date } = req.query;
     if (!date) return res.status(400).json({ error: 'date requerido (YYYY-MM-DD)' });
-    const { doctors } = getStore();
+    const { doctors, appointments } = getStore();
     const doctor = doctors.find(d => d.id === req.params.id);
     if (!doctor) return res.json([]);
     const dayNames = ['domingo', 'lunes', 'martes', 'miercoles', 'jueves', 'viernes', 'sabado'];
     const dia = dayNames[new Date(date + 'T00:00:00').getDay()];
-    res.json(doctor.disponibilidad[dia] || []);
+    const bookedTimes = appointments
+      .filter(a => a.medico_id === req.params.id && a.fecha === date && a.estado !== 'cancelada')
+      .map(a => a.hora);
+    const available = (doctor.disponibilidad[dia] || []).filter(t => !bookedTimes.includes(t));
+    res.json(available);
   } catch (err) { next(err); }
 });
 

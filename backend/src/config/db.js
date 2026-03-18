@@ -87,15 +87,26 @@ const initDB = async () => {
 const buildSeedData = () => {
   const hash = bcrypt.hashSync('Password123!', 10);
   return {
-    users: [{
-      id: '1', cedula: '1234567890', nombre: 'Maria', apellido: 'Rodriguez',
-      email: 'maria.rodriguez@email.com', celular: '3001234567',
-      fecha_nacimiento: '1990-05-15', departamento: 'Cundinamarca', municipio: 'Bogota',
-      direccion: 'Cra 15 #82-45, Apto 301, Chapinero', foto_url: null,
-      password_hash: hash, activo: true, intentos_fallidos: 0,
-      bloqueado_hasta: null, reset_code: null, reset_code_expires: null,
-      fecha_registro: '2023-01-15',
-    }],
+    users: [
+      {
+        id: '1', cedula: '1234567890', nombre: 'Maria', apellido: 'Rodriguez',
+        nombreCompleto: 'Maria Rodriguez',
+        email: 'maria.rodriguez@email.com', celular: '3001234567',
+        fecha_nacimiento: '1990-05-15', departamento: 'Cundinamarca', municipio: 'Bogota',
+        direccion: 'Cra 15 #82-45, Apto 301, Chapinero', foto_url: null,
+        password_hash: hash, role: 'paciente', activo: true, intentos_fallidos: 0,
+        bloqueado_hasta: null, reset_code: null, reset_code_expires: null,
+        fecha_registro: '2023-01-15',
+      },
+      { id: 'm1', cedula: '1000100001', nombre: 'Carlos', apellido: 'Mendoza', nombreCompleto: 'Carlos Mendoza', email: 'carlos.mendoza@eps.com', celular: null, fecha_nacimiento: null, departamento: '', municipio: '', direccion: '', foto_url: null, password_hash: hash, role: 'medico', medico_id: '1', activo: true, intentos_fallidos: 0, bloqueado_hasta: null, reset_code: null, reset_code_expires: null, fecha_registro: '2020-01-01' },
+      { id: 'm2', cedula: '1000100002', nombre: 'Laura', apellido: 'Perez', nombreCompleto: 'Laura Perez', email: 'laura.perez@eps.com', celular: null, fecha_nacimiento: null, departamento: '', municipio: '', direccion: '', foto_url: null, password_hash: hash, role: 'medico', medico_id: '2', activo: true, intentos_fallidos: 0, bloqueado_hasta: null, reset_code: null, reset_code_expires: null, fecha_registro: '2020-01-01' },
+      { id: 'm3', cedula: '1000100003', nombre: 'Ana', apellido: 'Martinez', nombreCompleto: 'Ana Martinez', email: 'ana.martinez@eps.com', celular: null, fecha_nacimiento: null, departamento: '', municipio: '', direccion: '', foto_url: null, password_hash: hash, role: 'medico', medico_id: '3', activo: true, intentos_fallidos: 0, bloqueado_hasta: null, reset_code: null, reset_code_expires: null, fecha_registro: '2020-01-01' },
+      { id: 'm4', cedula: '1000100004', nombre: 'Miguel', apellido: 'Ruiz', nombreCompleto: 'Miguel Ruiz', email: 'miguel.ruiz@eps.com', celular: null, fecha_nacimiento: null, departamento: '', municipio: '', direccion: '', foto_url: null, password_hash: hash, role: 'medico', medico_id: '4', activo: true, intentos_fallidos: 0, bloqueado_hasta: null, reset_code: null, reset_code_expires: null, fecha_registro: '2020-01-01' },
+      { id: 'm5', cedula: '1000100005', nombre: 'Fernando', apellido: 'Torres', nombreCompleto: 'Fernando Torres', email: 'fernando.torres@eps.com', celular: null, fecha_nacimiento: null, departamento: '', municipio: '', direccion: '', foto_url: null, password_hash: hash, role: 'medico', medico_id: '5', activo: true, intentos_fallidos: 0, bloqueado_hasta: null, reset_code: null, reset_code_expires: null, fecha_registro: '2020-01-01' },
+      { id: 'm6', cedula: '1000100006', nombre: 'Jorge', apellido: 'Sanchez', nombreCompleto: 'Jorge Sanchez', email: 'jorge.sanchez@eps.com', celular: null, fecha_nacimiento: null, departamento: '', municipio: '', direccion: '', foto_url: null, password_hash: hash, role: 'medico', medico_id: '6', activo: true, intentos_fallidos: 0, bloqueado_hasta: null, reset_code: null, reset_code_expires: null, fecha_registro: '2020-01-01' },
+      { id: 'm7', cedula: '1000100007', nombre: 'Patricia', apellido: 'Gomez', nombreCompleto: 'Patricia Gomez', email: 'patricia.gomez@eps.com', celular: null, fecha_nacimiento: null, departamento: '', municipio: '', direccion: '', foto_url: null, password_hash: hash, role: 'medico', medico_id: '7', activo: true, intentos_fallidos: 0, bloqueado_hasta: null, reset_code: null, reset_code_expires: null, fecha_registro: '2020-01-01' },
+      { id: 'm8', cedula: '1000100008', nombre: 'Andres', apellido: 'Ramirez', nombreCompleto: 'Andres Ramirez', email: 'andres.ramirez@eps.com', celular: null, fecha_nacimiento: null, departamento: '', municipio: '', direccion: '', foto_url: null, password_hash: hash, role: 'medico', medico_id: '8', activo: true, intentos_fallidos: 0, bloqueado_hasta: null, reset_code: null, reset_code_expires: null, fecha_registro: '2020-01-01' },
+    ],
     specialties: [
       { id: 'medicina-general', nombre: 'Medicina General', icono: 'Stethoscope', descripcion: 'Consulta medica general y preventiva' },
       { id: 'odontologia', nombre: 'Odontologia', icono: 'Smile', descripcion: 'Salud dental y bucal' },
