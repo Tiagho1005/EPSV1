@@ -1097,5 +1097,7 @@
       ]
     }
   ],
-  "renewal_requests": []
+  "renewal_requests": [],
+  "authorizations": [],
+  "health_metrics": []
 }

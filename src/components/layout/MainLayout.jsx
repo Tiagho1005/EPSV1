@@ -9,6 +9,7 @@ import { ROUTES, SESSION_TIMEOUT_MS, SESSION_WARNING_MS } from '../../utils/cons
 import useSessionTimeout from '../../hooks/useSessionTimeout';
 import Modal from '../ui/Modal';
 import Button from '../ui/Button';
+import ChatWidget from '../features/chat/ChatWidget';
 
 const breadcrumbMap = {
   [ROUTES.DASHBOARD]: 'Inicio',
@@ -138,6 +139,8 @@ const MainLayout = () => {
           </div>
         </main>
       </div>
+
+      <ChatWidget />
 
       {/* Session timeout warning modal */}
       <Modal

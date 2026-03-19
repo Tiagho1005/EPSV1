@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import Skeleton from '../components/ui/Skeleton';
+import { Bell } from 'lucide-react';
 import { useToast } from '../context/ToastContext';
 import { useNotifications } from '../context/NotificationContext';
 import { api } from '../services/api';
@@ -30,9 +31,32 @@ const saveTodayCache = (map) => {
   } catch {}
 };
 
+const getUpcomingDoses = (medications) => {
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  const currentMinutes = now.getHours() * 60 + now.getMinutes();
+
+  const upcoming = [];
+  for (const med of medications) {
+    if (!med.fecha_fin || med.fecha_fin < today) continue;
+    for (const horario of (med.horarios || [])) {
+      const [h, m] = horario.split(':').map(Number);
+      if (isNaN(h) || isNaN(m)) continue;
+      const scheduleMinutes = h * 60 + m;
+      const diff = scheduleMinutes - currentMinutes;
+      if (diff > 0 && diff <= 30) {
+        upcoming.push({ med, horario, minutesLeft: diff });
+      }
+    }
+  }
+  return upcoming.sort((a, b) => a.minutesLeft - b.minutesLeft);
+};
+
 const MedicationsPage = () => {
   const [medications, setMedications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [upcomingDoses, setUpcomingDoses] = useState([]);
+  const intervalRef = useRef(null);
   const [takenDoses, setTakenDoses] = useState(loadTodayCache);
   const [confirmModal, setConfirmModal] = useState(null);
   const [confirmLoading, setConfirmLoading] = useState(false);
@@ -62,6 +86,7 @@ const MedicationsPage = () => {
       try {
         const data = await api.getMedications();
         setMedications(data);
+        setUpcomingDoses(getUpcomingDoses(data));
       } catch (err) {
         console.error(err);
       } finally {
@@ -71,6 +96,16 @@ const MedicationsPage = () => {
     load();
     syncTakenDoses();
   }, [syncTakenDoses]);
+
+  useEffect(() => {
+    intervalRef.current = setInterval(() => {
+      setMedications(prev => {
+        setUpcomingDoses(getUpcomingDoses(prev));
+        return prev;
+      });
+    }, 60_000);
+    return () => clearInterval(intervalRef.current);
+  }, []);
 
   const handleMarkTaken = (med, horario) => {
     setConfirmModal({ med, horario });
@@ -137,7 +172,28 @@ const MedicationsPage = () => {
         <p className="text-gray-500 text-sm">Gestiona tus medicamentos y registra tus dosis</p>
       </div>
 
-      <MedicationList 
+      {upcomingDoses.length > 0 && (
+        <div className="space-y-2">
+          {upcomingDoses.map(({ med, horario, minutesLeft }) => (
+            <div
+              key={`${med.id}-${horario}`}
+              className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400"
+            >
+              <Bell size={18} className="text-amber-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-semibold text-amber-800 dark:text-amber-300">
+                  ¡Próxima dosis en {minutesLeft} minuto{minutesLeft !== 1 ? 's' : ''}!
+                </p>
+                <p className="text-xs text-amber-700 dark:text-amber-400 mt-0.5">
+                  {med.nombre} {med.dosis} — programado a las {horario}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <MedicationList
         medications={medications}
         takenDoses={takenDoses}
         onMarkTaken={handleMarkTaken}

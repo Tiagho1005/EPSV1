@@ -64,9 +64,9 @@ export const AuthProvider = ({ children }) => {
     }
   }, [savedSession]);
 
-  const login = async (cedula, password) => {
+  const login = async (cedula, password, portal) => {
     try {
-      const result = await api.login(cedula, password);
+      const result = await api.login(cedula, password, portal);
       const session = { user: result.user, token: result.token };
       setSavedSession(session);
       dispatch({ type: 'LOGIN_SUCCESS', payload: session });

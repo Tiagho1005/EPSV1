@@ -82,4 +82,25 @@ router.post('/change-password', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+router.put('/reminder-preferences', (req, res, next) => {
+  try {
+    const { emailEnabled, advanceMinutes } = req.body;
+    const store = getStore();
+    const user = store.users.find(u => u.id === req.user.userId);
+    if (!user) return res.status(404).json({ error: 'Usuario no encontrado' });
+
+    const VALID_MINUTES = [5, 10, 15, 30];
+    const prefs = user.reminder_preferences || { email_enabled: true, advance_minutes: 15 };
+
+    if (typeof emailEnabled === 'boolean') prefs.email_enabled = emailEnabled;
+    if (advanceMinutes !== undefined && VALID_MINUTES.includes(Number(advanceMinutes))) {
+      prefs.advance_minutes = Number(advanceMinutes);
+    }
+
+    user.reminder_preferences = prefs;
+    save();
+    res.json({ success: true, reminderPreferences: prefs });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;

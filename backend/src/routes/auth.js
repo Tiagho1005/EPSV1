@@ -12,9 +12,16 @@ const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-only-for-local-dev';
 const MAX_ATTEMPTS = 5;
 const BLOCK_MINUTES = 15;
 
+const portalRoleMap = { paciente: 'paciente', medico: 'medico', admin: 'admin' };
+const portalLabels = {
+  paciente: 'Portal del Afiliado',
+  medico: 'Portal del Médico',
+  admin: 'Panel de Administración',
+};
+
 router.post('/login', async (req, res, next) => {
   try {
-    const { cedula, password } = req.body;
+    const { cedula, password, portal } = req.body;
     if (!cedula || !password) return res.status(400).json({ error: 'Cedula y contrasena son requeridas' });
     const store = getStore();
     const user = store.users.find(u => u.cedula === cedula);
@@ -29,10 +36,17 @@ router.post('/login', async (req, res, next) => {
       save();
       return res.status(401).json({ error: 'Usuario o contrasena incorrectos. Por favor, verifica tus datos' });
     }
+    const userRole = user.role || 'paciente';
+    if (portal && portalRoleMap[portal] && portalRoleMap[portal] !== userRole) {
+      const expectedPortal = Object.keys(portalRoleMap).find(k => portalRoleMap[k] === userRole);
+      return res.status(403).json({
+        error: `Esta cuenta no tiene acceso al ${portalLabels[portal]}. Por favor ingresa por el ${portalLabels[expectedPortal] || 'portal correcto'}.`,
+      });
+    }
     user.intentos_fallidos = 0;
     user.bloqueado_hasta = null;
     save();
-    const token = jwt.sign({ userId: user.id, cedula: user.cedula, role: user.role || 'paciente', medicoId: user.medico_id || null, jti: uuidv4() }, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ userId: user.id, cedula: user.cedula, role: userRole, medicoId: user.medico_id || null, jti: uuidv4() }, JWT_SECRET, { expiresIn: '24h' });
     res.json({ success: true, user: formatUser(user), token });
   } catch (err) { next(err); }
 });

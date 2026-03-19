@@ -99,6 +99,7 @@ const buildSeedData = () => {
         password_hash: hash, role: 'paciente', activo: true, intentos_fallidos: 0,
         bloqueado_hasta: null, reset_code: null, reset_code_expires: null,
         fecha_registro: '2023-01-15',
+        reminder_preferences: { email_enabled: true, advance_minutes: 15 },
       },
       { id: 'm1', cedula: '1000100001', nombre: 'Carlos', apellido: 'Mendoza', nombreCompleto: 'Carlos Mendoza', email: 'carlos.mendoza@eps.com', celular: null, fecha_nacimiento: null, departamento: '', municipio: '', direccion: '', foto_url: null, password_hash: hash, role: 'medico', medico_id: '1', activo: true, intentos_fallidos: 0, bloqueado_hasta: null, reset_code: null, reset_code_expires: null, fecha_registro: '2020-01-01' },
       { id: 'm2', cedula: '1000100002', nombre: 'Laura', apellido: 'Perez', nombreCompleto: 'Laura Perez', email: 'laura.perez@eps.com', celular: null, fecha_nacimiento: null, departamento: '', municipio: '', direccion: '', foto_url: null, password_hash: hash, role: 'medico', medico_id: '2', activo: true, intentos_fallidos: 0, bloqueado_hasta: null, reset_code: null, reset_code_expires: null, fecha_registro: '2020-01-01' },

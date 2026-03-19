@@ -20,6 +20,7 @@ const formatUser = (u) => {
     activo: u.activo,
     role: u.role || 'paciente',
     medicoId: u.medico_id || null,
+    reminderPreferences: u.reminder_preferences || { email_enabled: true, advance_minutes: 15 },
   };
 };
 

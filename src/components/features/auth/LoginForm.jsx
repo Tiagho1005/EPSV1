@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HeartPulse, IdCard, Lock, AlertTriangle, Stethoscope } from 'lucide-react';
+import { HeartPulse, IdCard, Lock, AlertTriangle, Stethoscope, Shield } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
 import Input from '../../ui/Input';
@@ -27,14 +27,17 @@ const LoginForm = ({ onError, portal = 'paciente', onNavigate }) => {
   const onSubmit = async (formValues) => {
     setLoginError('');
     try {
-      const result = await login(formValues.cedula, formValues.password);
+      const result = await login(formValues.cedula, formValues.password, portal);
       setFailedAttempts(0);
       showToast({
         type: 'success',
         title: '¡Bienvenido/a!',
         message: `¡Bienvenido/a de vuelta, ${result.user.nombre}!`,
       });
-      navigate(ROUTES.DASHBOARD);
+      const role = result.user.role;
+      if (role === 'admin') navigate(ROUTES.ADMIN_DASHBOARD);
+      else if (role === 'medico') navigate(ROUTES.MEDICO_DASHBOARD);
+      else navigate(ROUTES.DASHBOARD);
     } catch (error) {
       const newAttempts = failedAttempts + 1;
       setFailedAttempts(newAttempts);
@@ -55,7 +58,7 @@ const LoginForm = ({ onError, portal = 'paciente', onNavigate }) => {
         </div>
         <h1 className="text-2xl font-bold text-gray-800">EPS</h1>
         <p className="text-sm text-gray-500 flex items-center justify-center gap-1">
-          {portal === 'medico' ? <><Stethoscope size={14} /> Portal del Médico</> : 'Portal del Afiliado'}
+          {portal === 'medico' ? <><Stethoscope size={14} /> Portal del Médico</> : portal === 'admin' ? <><Shield size={14} /> Panel de Administración</> : 'Portal del Afiliado'}
         </p>
       </div>
 

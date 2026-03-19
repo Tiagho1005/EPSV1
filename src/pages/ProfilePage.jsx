@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { IdCard, Camera, FileDown, Download, Loader2 } from 'lucide-react';
+import { IdCard, Camera, FileDown, Download, Loader2, Bell } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import Card from '../components/ui/Card';
@@ -10,12 +10,40 @@ import { formatDate, getInitials } from '../utils/formatters';
 import { api } from '../services/api';
 import { generateAffiliationCertificate, generateMedicalHistoryPDF } from '../utils/pdfGenerator';
 
+const ADVANCE_OPTIONS = [
+  { value: 5,  label: '5 minutos' },
+  { value: 10, label: '10 minutos' },
+  { value: 15, label: '15 minutos' },
+  { value: 30, label: '30 minutos' },
+];
+
 const ProfilePage = () => {
   const { user, updateUser } = useAuth();
   const { showToast } = useToast();
   const [uploadingPic, setUploadingPic] = useState(false);
   const [downloadingHistory, setDownloadingHistory] = useState(false);
   const fileInputRef = useRef(null);
+
+  const [reminderPrefs, setReminderPrefs] = useState(() => ({
+    emailEnabled: user?.reminderPreferences?.email_enabled ?? true,
+    advanceMinutes: user?.reminderPreferences?.advance_minutes ?? 15,
+  }));
+  const [savingReminders, setSavingReminders] = useState(false);
+
+  const handleReminderChange = async (patch) => {
+    const next = { ...reminderPrefs, ...patch };
+    setReminderPrefs(next);
+    setSavingReminders(true);
+    try {
+      await api.updateReminderPreferences({ emailEnabled: next.emailEnabled, advanceMinutes: next.advanceMinutes });
+      showToast({ type: 'success', title: 'Preferencias guardadas', message: 'Configuración de recordatorios actualizada' });
+    } catch (err) {
+      showToast({ type: 'error', title: 'Error', message: err.message });
+      setReminderPrefs(reminderPrefs); // revert
+    } finally {
+      setSavingReminders(false);
+    }
+  };
 
   const handleDownloadCertificate = () => {
     try {
@@ -133,6 +161,64 @@ const ProfilePage = () => {
       <ProfileForm user={user} updateUser={updateUser} showToast={showToast} />
 
       <ChangePasswordForm showToast={showToast} />
+
+      {/* Reminders */}
+      <Card>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center flex-shrink-0">
+            <Bell size={18} className="text-white" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-gray-800 dark:text-gray-100">Recordatorios</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Recibe un email antes de cada dosis programada de tus medicamentos activos</p>
+          </div>
+        </div>
+
+        <div className="space-y-4">
+          {/* Toggle */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Recordatorios de medicamentos por email</p>
+              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                {reminderPrefs.emailEnabled ? 'Activado — recibirás un email antes de cada dosis' : 'Desactivado'}
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled={savingReminders}
+              onClick={() => handleReminderChange({ emailEnabled: !reminderPrefs.emailEnabled })}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none cursor-pointer disabled:opacity-50 ${
+                reminderPrefs.emailEnabled ? 'bg-primary-500' : 'bg-gray-300 dark:bg-gray-600'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 rounded-full bg-white shadow transform transition-transform ${
+                  reminderPrefs.emailEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
+          </div>
+
+          {/* Advance minutes select */}
+          {reminderPrefs.emailEnabled && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Anticipación del recordatorio
+              </label>
+              <select
+                value={reminderPrefs.advanceMinutes}
+                disabled={savingReminders}
+                onChange={e => handleReminderChange({ advanceMinutes: Number(e.target.value) })}
+                className="w-full border border-gray-300 dark:border-gray-600 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500/30 bg-white dark:bg-gray-800 dark:text-gray-100 cursor-pointer disabled:opacity-50"
+              >
+                {ADVANCE_OPTIONS.map(({ value, label }) => (
+                  <option key={value} value={value}>{label} antes</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+      </Card>
 
       {/* Documents */}
       <Card>

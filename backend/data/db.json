@@ -202,6 +202,28 @@
       "reset_code": null,
       "reset_code_expires": null,
       "fecha_registro": "2020-01-01"
+    },
+    {
+      "id": "admin-1",
+      "cedula": "9999999999",
+      "nombre": "Admin",
+      "apellido": "Sistema",
+      "nombreCompleto": "Administrador del Sistema",
+      "email": "admin@eps.com",
+      "celular": "3009999999",
+      "fecha_nacimiento": "1985-01-01",
+      "departamento": "Cundinamarca",
+      "municipio": "Bogota",
+      "direccion": "Sede Principal",
+      "foto_url": null,
+      "password_hash": "$2a$10$W8JpIMVfW.DLLSWxgPmeUuWLSzGeMq6OM/TDIR9E79pPLbLu1HzSC",
+      "role": "admin",
+      "activo": true,
+      "intentos_fallidos": 0,
+      "bloqueado_hasta": null,
+      "reset_code": null,
+      "reset_code_expires": null,
+      "fecha_registro": "2023-01-01"
     }
   ],
   "specialties": [

@@ -44,8 +44,8 @@ const request = async (method, path, body = null, auth = true) => {
 
 export const api = {
   // Auth
-  login: (cedula, password) =>
-    request('POST', '/auth/login', { cedula, password }, false),
+  login: (cedula, password, portal) =>
+    request('POST', '/auth/login', { cedula, password, portal }, false),
 
   register: (userData) =>
     request('POST', '/auth/register', userData, false),
@@ -188,6 +188,9 @@ export const api = {
   createLocation: (data) => request('POST', '/admin/locations', data),
   updateLocation: (id, data) => request('PUT', `/admin/locations/${id}`, data),
   deleteLocation: (id) => request('DELETE', `/admin/locations/${id}`),
+
+  updateReminderPreferences: (prefs) => request('PUT', '/profile/reminder-preferences', prefs),
+  sendChatMessage: (message, history) => request('POST', '/chat', { message, history }),
 
   getAdminSpecialties: () => request('GET', '/admin/specialties'),
   createSpecialty: (data) => request('POST', '/admin/specialties', data),
