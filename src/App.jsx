@@ -12,12 +12,14 @@ import AppointmentsPage from './pages/AppointmentsPage';
 import NewAppointmentPage from './pages/NewAppointmentPage';
 import MedicalHistoryPage from './pages/MedicalHistoryPage';
 import MedicationsPage from './pages/MedicationsPage';
+import AuthorizationsPage from './pages/AuthorizationsPage';
 import ProfilePage from './pages/ProfilePage';
 import HelpPage from './pages/HelpPage';
 import NotFoundPage from './pages/NotFoundPage';
 import MedicoDashboardPage from './pages/medico/MedicoDashboardPage';
 import MedicoAppointmentsPage from './pages/medico/MedicoAppointmentsPage';
 import MedicoRenewalsPage from './pages/medico/MedicoRenewalsPage';
+import MedicoAuthorizationsPage from './pages/medico/MedicoAuthorizationsPage';
 import { PageSpinner } from './components/ui/Spinner';
 import { ROUTES } from './utils/constants';
 
@@ -73,6 +75,7 @@ const AppRoutes = () => {
         <Route path={ROUTES.NEW_APPOINTMENT} element={<NewAppointmentPage />} />
         <Route path={ROUTES.MEDICAL_HISTORY} element={<MedicalHistoryPage />} />
         <Route path={ROUTES.MEDICATIONS} element={<MedicationsPage />} />
+        <Route path={ROUTES.AUTHORIZATIONS} element={<AuthorizationsPage />} />
         <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
         <Route path={ROUTES.HELP} element={<HelpPage />} />
       </Route>
@@ -88,6 +91,7 @@ const AppRoutes = () => {
         <Route path={ROUTES.MEDICO_DASHBOARD} element={<MedicoDashboardPage />} />
         <Route path={ROUTES.MEDICO_APPOINTMENTS} element={<MedicoAppointmentsPage />} />
         <Route path={ROUTES.MEDICO_RENEWALS} element={<MedicoRenewalsPage />} />
+        <Route path={ROUTES.MEDICO_AUTHORIZATIONS} element={<MedicoAuthorizationsPage />} />
         <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
         <Route path={ROUTES.HELP} element={<HelpPage />} />
       </Route>

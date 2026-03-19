@@ -123,4 +123,26 @@ export const api = {
   processMedicoRenewal: (id, action, nota) =>
     request('PATCH', `/medico/renewals/${id}`, { action, nota }),
   prescribeMedication: (data) => request('POST', '/medico/prescriptions', data),
+
+  // Authorizations - Paciente
+  getAuthorizations: (estado, tipo) => {
+    const params = new URLSearchParams();
+    if (estado) params.set('estado', estado);
+    if (tipo) params.set('tipo', tipo);
+    const qs = params.toString();
+    return request('GET', `/authorizations${qs ? `?${qs}` : ''}`);
+  },
+  getAuthorization: (id) => request('GET', `/authorizations/${id}`),
+
+  // Authorizations - Médico
+  getMedicoAuthorizations: (estado, tipo) => {
+    const params = new URLSearchParams();
+    if (estado) params.set('estado', estado);
+    if (tipo) params.set('tipo', tipo);
+    const qs = params.toString();
+    return request('GET', `/authorizations/medico${qs ? `?${qs}` : ''}`);
+  },
+  createAuthorization: (data) => request('POST', '/authorizations', data),
+  processAuthorization: (id, action, notas) =>
+    request('PATCH', `/authorizations/${id}/process`, { action, notas }),
 };

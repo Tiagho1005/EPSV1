@@ -10,11 +10,13 @@ export const ROUTES = {
   NEW_APPOINTMENT: '/appointments/new',
   MEDICAL_HISTORY: '/medical-history',
   MEDICATIONS: '/medications',
+  AUTHORIZATIONS: '/authorizations',
   PROFILE: '/profile',
   HELP: '/help',
   MEDICO_DASHBOARD: '/medico/dashboard',
   MEDICO_APPOINTMENTS: '/medico/appointments',
   MEDICO_RENEWALS: '/medico/renewals',
+  MEDICO_AUTHORIZATIONS: '/medico/authorizations',
 };
 
 export const APPOINTMENT_STATES = {
@@ -36,6 +38,35 @@ export const STATE_VARIANTS = {
   pendiente: 'warning',
   completada: 'info',
   cancelada: 'error',
+};
+
+export const AUTHORIZATION_STATES = {
+  PENDIENTE: 'pendiente',
+  APROBADA:  'aprobada',
+  RECHAZADA: 'rechazada',
+  VENCIDA:   'vencida',
+};
+
+export const AUTH_STATE_LABELS = {
+  pendiente: 'Pendiente',
+  aprobada:  'Aprobada',
+  rechazada: 'Rechazada',
+  vencida:   'Vencida',
+};
+
+export const AUTH_STATE_VARIANTS = {
+  pendiente: 'warning',
+  aprobada:  'success',
+  rechazada: 'error',
+  vencida:   'secondary',
+};
+
+export const AUTHORIZATION_TYPES = {
+  examen:                'Examen de laboratorio',
+  procedimiento:         'Procedimiento',
+  consulta_especialista: 'Consulta con especialista',
+  imagen:                'Imagen diagnóstica',
+  cirugia:               'Cirugía',
 };
 
 export const MAX_LOGIN_ATTEMPTS = 5;

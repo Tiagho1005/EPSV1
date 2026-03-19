@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  HeartPulse, Calendar, FileText, Pill, Bell, Shield,
+  HeartPulse, Calendar, FileText, Pill, Bell, Shield, FileCheck,
   MapPin, Phone, Clock, Menu, X, ArrowRight, ChevronRight,
   Stethoscope, Smile, Baby, Heart, Sparkles, Eye, Brain,
   Star, Facebook, Twitter, Instagram, Linkedin, Mail,
@@ -86,6 +86,11 @@ const FEATURES = [
     icon: Bell,
     title: 'Notificaciones',
     desc:  'Confirmaciones por email y notificaciones en tiempo real de cada evento.',
+  },
+  {
+    icon: FileCheck,
+    title: 'Autorizaciones Médicas',
+    desc:  'Seguimiento en tiempo real del estado de tus autorizaciones médicas.',
   },
   {
     icon: Shield,

@@ -21,6 +21,8 @@ const breadcrumbMap = {
   [ROUTES.MEDICO_DASHBOARD]: 'Inicio',
   [ROUTES.MEDICO_APPOINTMENTS]: 'Mis Consultas',
   [ROUTES.MEDICO_RENEWALS]: 'Renovaciones',
+  [ROUTES.AUTHORIZATIONS]: 'Autorizaciones',
+  [ROUTES.MEDICO_AUTHORIZATIONS]: 'Autorizaciones',
 };
 
 const COUNTDOWN_SECONDS = Math.round((SESSION_TIMEOUT_MS - SESSION_WARNING_MS) / 1000);
