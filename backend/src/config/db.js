@@ -63,6 +63,7 @@ const initDB = async () => {
       if (!store.renewal_requests) store.renewal_requests = [];
       if (!store.medication_taken_log) store.medication_taken_log = [];
       if (!store.authorizations) store.authorizations = [];
+      if (!store.health_metrics) store.health_metrics = [];
       console.log('Base de datos cargada');
     } catch (err) {
       console.error('[DB] db.json corrupto, restaurando desde backup más reciente...');
@@ -147,6 +148,46 @@ const buildSeedData = () => {
       { id: '3', user_id: '1', nombre: 'Amoxicilina', dosis: '500mg', presentacion: 'Capsula', frecuencia: 'Cada 8 horas', horarios: ['08:00', '16:00', '00:00'], fecha_inicio: '2026-03-09', fecha_fin: '2026-03-15', medico: 'Dr. Carlos Mendoza', renovable: false, instrucciones: 'Completar todo el tratamiento. Tomar con o sin alimentos.' },
     ],
     medication_taken_log: [],
+    health_metrics: [
+      // ── Presión arterial (9 registros) ──────────────────────────────────────
+      { id: 'hm-1',  user_id: '1', tipo: 'presion_arterial', valor: { sistolica: 125, diastolica: 82 }, unidad: 'mmHg', notas: 'Mañana antes del desayuno',    fecha: '2026-03-17', hora: '08:00', created_at: '2026-03-17T08:00:00.000Z' },
+      { id: 'hm-2',  user_id: '1', tipo: 'presion_arterial', valor: { sistolica: 128, diastolica: 85 }, unidad: 'mmHg', notas: '',                               fecha: '2026-03-14', hora: '08:15', created_at: '2026-03-14T08:15:00.000Z' },
+      { id: 'hm-3',  user_id: '1', tipo: 'presion_arterial', valor: { sistolica: 122, diastolica: 80 }, unidad: 'mmHg', notas: 'Después de descanso',           fecha: '2026-03-10', hora: '07:45', created_at: '2026-03-10T07:45:00.000Z' },
+      { id: 'hm-4',  user_id: '1', tipo: 'presion_arterial', valor: { sistolica: 132, diastolica: 88 }, unidad: 'mmHg', notas: 'Algo elevada, mucho estrés',    fecha: '2026-03-07', hora: '08:00', created_at: '2026-03-07T08:00:00.000Z' },
+      { id: 'hm-5',  user_id: '1', tipo: 'presion_arterial', valor: { sistolica: 118, diastolica: 77 }, unidad: 'mmHg', notas: '',                               fecha: '2026-03-03', hora: '08:30', created_at: '2026-03-03T08:30:00.000Z' },
+      { id: 'hm-6',  user_id: '1', tipo: 'presion_arterial', valor: { sistolica: 130, diastolica: 87 }, unidad: 'mmHg', notas: '',                               fecha: '2026-02-28', hora: '08:00', created_at: '2026-02-28T08:00:00.000Z' },
+      { id: 'hm-7',  user_id: '1', tipo: 'presion_arterial', valor: { sistolica: 120, diastolica: 80 }, unidad: 'mmHg', notas: 'Control post-consulta',         fecha: '2026-02-24', hora: '07:30', created_at: '2026-02-24T07:30:00.000Z' },
+      { id: 'hm-8',  user_id: '1', tipo: 'presion_arterial', valor: { sistolica: 126, diastolica: 83 }, unidad: 'mmHg', notas: '',                               fecha: '2026-02-21', hora: '08:00', created_at: '2026-02-21T08:00:00.000Z' },
+      { id: 'hm-9',  user_id: '1', tipo: 'presion_arterial', valor: { sistolica: 135, diastolica: 90 }, unidad: 'mmHg', notas: 'Pico tensional registrado',     fecha: '2026-02-17', hora: '08:00', created_at: '2026-02-17T08:00:00.000Z' },
+      // ── Glucosa (7 registros) ────────────────────────────────────────────────
+      { id: 'hm-10', user_id: '1', tipo: 'glucosa', valor: { valor: 95  }, unidad: 'mg/dL', notas: 'En ayunas',              fecha: '2026-03-18', hora: '07:00', created_at: '2026-03-18T07:00:00.000Z' },
+      { id: 'hm-11', user_id: '1', tipo: 'glucosa', valor: { valor: 98  }, unidad: 'mg/dL', notas: 'En ayunas',              fecha: '2026-03-15', hora: '07:30', created_at: '2026-03-15T07:30:00.000Z' },
+      { id: 'hm-12', user_id: '1', tipo: 'glucosa', valor: { valor: 108 }, unidad: 'mg/dL', notas: '2 h post-almuerzo',      fecha: '2026-03-11', hora: '14:00', created_at: '2026-03-11T14:00:00.000Z' },
+      { id: 'hm-13', user_id: '1', tipo: 'glucosa', valor: { valor: 92  }, unidad: 'mg/dL', notas: 'En ayunas',              fecha: '2026-03-05', hora: '07:00', created_at: '2026-03-05T07:00:00.000Z' },
+      { id: 'hm-14', user_id: '1', tipo: 'glucosa', valor: { valor: 87  }, unidad: 'mg/dL', notas: 'En ayunas',              fecha: '2026-02-26', hora: '07:30', created_at: '2026-02-26T07:30:00.000Z' },
+      { id: 'hm-15', user_id: '1', tipo: 'glucosa', valor: { valor: 105 }, unidad: 'mg/dL', notas: 'Post-ejercicio',         fecha: '2026-02-22', hora: '10:30', created_at: '2026-02-22T10:30:00.000Z' },
+      { id: 'hm-16', user_id: '1', tipo: 'glucosa', valor: { valor: 90  }, unidad: 'mg/dL', notas: 'En ayunas',              fecha: '2026-02-18', hora: '07:00', created_at: '2026-02-18T07:00:00.000Z' },
+      // ── Peso (4 registros) ───────────────────────────────────────────────────
+      { id: 'hm-17', user_id: '1', tipo: 'peso', valor: { valor: 66.2 }, unidad: 'kg', notas: '',                            fecha: '2026-03-18', hora: '06:30', created_at: '2026-03-18T06:30:00.000Z' },
+      { id: 'hm-18', user_id: '1', tipo: 'peso', valor: { valor: 66.5 }, unidad: 'kg', notas: '',                            fecha: '2026-03-10', hora: '06:30', created_at: '2026-03-10T06:30:00.000Z' },
+      { id: 'hm-19', user_id: '1', tipo: 'peso', valor: { valor: 66.8 }, unidad: 'kg', notas: '',                            fecha: '2026-03-02', hora: '06:30', created_at: '2026-03-02T06:30:00.000Z' },
+      { id: 'hm-20', user_id: '1', tipo: 'peso', valor: { valor: 67.0 }, unidad: 'kg', notas: 'Postprandial',               fecha: '2026-02-23', hora: '06:30', created_at: '2026-02-23T06:30:00.000Z' },
+      // ── Frecuencia cardíaca (5 registros) ────────────────────────────────────
+      { id: 'hm-21', user_id: '1', tipo: 'frecuencia_cardiaca', valor: { valor: 72 }, unidad: 'bpm', notas: 'En reposo',     fecha: '2026-03-17', hora: '08:00', created_at: '2026-03-17T08:00:00.000Z' },
+      { id: 'hm-22', user_id: '1', tipo: 'frecuencia_cardiaca', valor: { valor: 75 }, unidad: 'bpm', notas: '',              fecha: '2026-03-10', hora: '07:45', created_at: '2026-03-10T07:45:00.000Z' },
+      { id: 'hm-23', user_id: '1', tipo: 'frecuencia_cardiaca', valor: { valor: 68 }, unidad: 'bpm', notas: 'En reposo',     fecha: '2026-03-03', hora: '08:30', created_at: '2026-03-03T08:30:00.000Z' },
+      { id: 'hm-24', user_id: '1', tipo: 'frecuencia_cardiaca', valor: { valor: 80 }, unidad: 'bpm', notas: '',              fecha: '2026-02-24', hora: '07:30', created_at: '2026-02-24T07:30:00.000Z' },
+      { id: 'hm-25', user_id: '1', tipo: 'frecuencia_cardiaca', valor: { valor: 77 }, unidad: 'bpm', notas: 'Post-caminata', fecha: '2026-02-19', hora: '09:00', created_at: '2026-02-19T09:00:00.000Z' },
+      // ── Temperatura (3 registros) ─────────────────────────────────────────────
+      { id: 'hm-26', user_id: '1', tipo: 'temperatura', valor: { valor: 36.6 }, unidad: '°C', notas: '',                    fecha: '2026-03-08', hora: '10:00', created_at: '2026-03-08T10:00:00.000Z' },
+      { id: 'hm-27', user_id: '1', tipo: 'temperatura', valor: { valor: 36.4 }, unidad: '°C', notas: '',                    fecha: '2026-02-24', hora: '11:00', created_at: '2026-02-24T11:00:00.000Z' },
+      { id: 'hm-28', user_id: '1', tipo: 'temperatura', valor: { valor: 36.8 }, unidad: '°C', notas: 'Leve malestar',       fecha: '2026-02-17', hora: '09:30', created_at: '2026-02-17T09:30:00.000Z' },
+      // ── Oximetría (4 registros) ───────────────────────────────────────────────
+      { id: 'hm-29', user_id: '1', tipo: 'oximetria', valor: { valor: 98 }, unidad: '%', notas: '',                          fecha: '2026-03-17', hora: '08:00', created_at: '2026-03-17T08:00:00.000Z' },
+      { id: 'hm-30', user_id: '1', tipo: 'oximetria', valor: { valor: 97 }, unidad: '%', notas: '',                          fecha: '2026-03-10', hora: '07:45', created_at: '2026-03-10T07:45:00.000Z' },
+      { id: 'hm-31', user_id: '1', tipo: 'oximetria', valor: { valor: 99 }, unidad: '%', notas: 'En reposo',                 fecha: '2026-02-24', hora: '07:30', created_at: '2026-02-24T07:30:00.000Z' },
+      { id: 'hm-32', user_id: '1', tipo: 'oximetria', valor: { valor: 96 }, unidad: '%', notas: '',                          fecha: '2026-02-17', hora: '08:00', created_at: '2026-02-17T08:00:00.000Z' },
+    ],
     authorizations: [
       {
         id: '1',

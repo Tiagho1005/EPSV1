@@ -145,4 +145,23 @@ export const api = {
   createAuthorization: (data) => request('POST', '/authorizations', data),
   processAuthorization: (id, action, notas) =>
     request('PATCH', `/authorizations/${id}/process`, { action, notas }),
+
+  // Health Metrics
+  getHealthMetrics: (tipo, desde, hasta) => {
+    const params = new URLSearchParams();
+    if (tipo) params.set('tipo', tipo);
+    if (desde) params.set('desde', desde);
+    if (hasta) params.set('hasta', hasta);
+    const qs = params.toString();
+    return request('GET', `/health-metrics${qs ? `?${qs}` : ''}`);
+  },
+  getHealthSummary: () => request('GET', '/health-metrics/summary'),
+  addHealthMetric: (data) => request('POST', '/health-metrics', data),
+  deleteHealthMetric: (id) => request('DELETE', `/health-metrics/${id}`),
+  getMedicoPatientMetrics: (userId, tipo) => {
+    const params = new URLSearchParams();
+    if (tipo) params.set('tipo', tipo);
+    const qs = params.toString();
+    return request('GET', `/health-metrics/patient/${userId}${qs ? `?${qs}` : ''}`);
+  },
 };

@@ -18,6 +18,7 @@ const pacienteMenu = [
   { icon: FileText, label: 'Historial Médico', path: ROUTES.MEDICAL_HISTORY },
   { icon: Pill, label: 'Medicamentos', path: ROUTES.MEDICATIONS },
   { icon: FileCheck, label: 'Autorizaciones', path: ROUTES.AUTHORIZATIONS },
+  { icon: HeartPulse, label: 'Mi Salud', path: ROUTES.HEALTH },
   { icon: Download, label: 'Certificados', path: ROUTES.CERTIFICATES },
   { icon: User, label: 'Mi Perfil', path: ROUTES.PROFILE },
   { divider: true },

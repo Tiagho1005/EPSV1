@@ -12,6 +12,8 @@ export const ROUTES = {
   MEDICATIONS: '/medications',
   AUTHORIZATIONS: '/authorizations',
   CERTIFICATES: '/certificates',
+  HEALTH: '/health',
+  HEALTH_DASHBOARD: '/health',
   PROFILE: '/profile',
   HELP: '/help',
   MEDICO_DASHBOARD: '/medico/dashboard',
