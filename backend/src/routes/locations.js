@@ -1,19 +1,21 @@
 const router = require('express').Router();
 const auth = require('../middleware/auth');
-const { getStore } = require('../config/db');
+const { pool } = require('../config/mysql');
 
 router.use(auth);
 
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
-    const store = getStore();
     const { doctorId } = req.query;
     if (doctorId) {
-      const doctor = store.doctors.find(d => d.id === doctorId);
-      if (!doctor) return res.json([]);
-      return res.json(store.locations.filter(l => doctor.sedes.includes(l.id)));
+      const [rows] = await pool.execute(
+        'SELECT l.* FROM locations l JOIN doctor_sedes ds ON l.id = ds.sede_id WHERE ds.doctor_id = ?',
+        [doctorId]
+      );
+      return res.json(rows);
     }
-    res.json(store.locations);
+    const [rows] = await pool.execute('SELECT * FROM locations');
+    res.json(rows);
   } catch (err) { next(err); }
 });
 

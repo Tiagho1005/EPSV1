@@ -1,4 +1,10 @@
-const cron = require('node-cron');
+/**
+ * Genera reminderScheduler.js migrado a MySQL.
+ */
+const fs = require('fs');
+const path = require('path');
+
+const content = `const cron = require('node-cron');
 const { pool } = require('../config/mysql');
 const { sendMedicationReminder } = require('../config/mailer');
 const logger = require('../config/logger');
@@ -27,14 +33,14 @@ const checkAndSendReminders = async () => {
 
     // Medicamentos activos con sus horarios y datos del usuario
     const [rows] = await pool.execute(
-      `SELECT m.id, m.nombre, m.dosis, m.instrucciones, m.user_id,
+      \`SELECT m.id, m.nombre, m.dosis, m.instrucciones, m.user_id,
               mh.hora,
               u.email, u.nombre AS user_nombre, u.activo,
               u.reminder_email, u.reminder_advance_min
        FROM medications m
        JOIN medication_horarios mh ON mh.medication_id = m.id
        JOIN users u ON u.id = m.user_id
-       WHERE m.fecha_fin >= ? AND u.activo = 1 AND u.reminder_email = 1`,
+       WHERE m.fecha_fin >= ? AND u.activo = 1 AND u.reminder_email = 1\`,
       [today]
     );
 
@@ -50,7 +56,7 @@ const checkAndSendReminders = async () => {
       const diff = currentMinutes - targetMinutes;
       if (diff < -5 || diff >= 10) continue;
 
-      const key = `${row.user_id}-${row.id}-${horario}-${today}`;
+      const key = \`\${row.user_id}-\${row.id}-\${horario}-\${today}\`;
       if (sentReminders.has(key)) continue;
 
       sendQueue.push({ row, horario, key });
@@ -67,13 +73,13 @@ const checkAndSendReminders = async () => {
           instrucciones: row.instrucciones || '',
         });
         sentReminders.set(key, true);
-        logger.info(`[Reminder] Enviado a ${row.email}: ${row.nombre} ${horario}`);
+        logger.info(\`[Reminder] Enviado a \${row.email}: \${row.nombre} \${horario}\`);
       } catch (err) {
-        logger.error(`[Reminder] Error enviando a ${row.email}: ${err.message}`);
+        logger.error(\`[Reminder] Error enviando a \${row.email}: \${err.message}\`);
       }
     }
   } catch (err) {
-    logger.error(`[Reminder] Error en checkAndSendReminders: ${err.message}`);
+    logger.error(\`[Reminder] Error en checkAndSendReminders: \${err.message}\`);
   }
 };
 
@@ -86,3 +92,10 @@ const startReminderScheduler = () => {
 };
 
 module.exports = { startReminderScheduler };
+`;
+
+fs.writeFileSync(
+  path.join(__dirname, '../src/services/reminderScheduler.js'),
+  content, 'utf8'
+);
+console.log('✓ reminderScheduler.js');

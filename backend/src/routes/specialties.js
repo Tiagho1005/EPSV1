@@ -1,12 +1,13 @@
 const router = require('express').Router();
 const auth = require('../middleware/auth');
-const { getStore } = require('../config/db');
+const { pool } = require('../config/mysql');
 
 router.use(auth);
 
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
-    res.json(getStore().specialties);
+    const [rows] = await pool.execute('SELECT * FROM specialties');
+    res.json(rows);
   } catch (err) { next(err); }
 });
 

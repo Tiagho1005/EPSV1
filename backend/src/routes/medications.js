@@ -1,100 +1,97 @@
 const router = require('express').Router();
 const { v4: uuidv4 } = require('uuid');
 const auth = require('../middleware/auth');
-const { getStore, save } = require('../config/db');
+const { pool } = require('../config/mysql');
+
+const fmtDate = (d) => {
+  if (!d) return null;
+  if (d instanceof Date) return d.toISOString().split('T')[0];
+  return String(d);
+};
+const fmtTime = (t) => {
+  if (!t) return null;
+  if (typeof t === 'string') return t.slice(0, 5);
+  const h = String(t.hours ?? 0).padStart(2, '0');
+  const m = String(t.minutes ?? 0).padStart(2, '0');
+  return h + ':' + m;
+};
 
 router.use(auth);
 
-router.get('/', (req, res, next) => {
+// Reconstruye el objeto medicamento con sus horarios
+const buildMed = async (m) => {
+  const [horarios] = await pool.execute('SELECT hora FROM medication_horarios WHERE medication_id = ? ORDER BY hora', [m.id]);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const endDate = new Date(fmtDate(m.fecha_fin) + 'T00:00:00');
+  return {
+    id: m.id,
+    nombre: m.nombre,
+    dosis: m.dosis,
+    presentacion: m.presentacion,
+    frecuencia: m.frecuencia,
+    horarios: horarios.map(h => fmtTime(h.hora)),
+    diasRestantes: Math.max(0, Math.ceil((endDate - today) / 86400000)),
+    fechaInicio: fmtDate(m.fecha_inicio),
+    fechaFin: fmtDate(m.fecha_fin),
+    medico: m.medico,
+    renovable: m.renovable === 1 || m.renovable === true,
+    instrucciones: m.instrucciones || '',
+  };
+};
+
+router.get('/', async (req, res, next) => {
   try {
-    const { medications } = getStore();
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const result = medications
-      .filter(m => m.user_id === req.user.userId)
-      .map(m => {
-        const endDate = new Date(m.fecha_fin + 'T00:00:00');
-        const diasRestantes = Math.max(0, Math.ceil((endDate - today) / 86400000));
-        return {
-          id: m.id, nombre: m.nombre, dosis: m.dosis, presentacion: m.presentacion,
-          frecuencia: m.frecuencia, horarios: m.horarios, diasRestantes,
-          fechaInicio: m.fecha_inicio, fechaFin: m.fecha_fin,
-          medico: m.medico, renovable: m.renovable, instrucciones: m.instrucciones,
-        };
-      });
+    const [meds] = await pool.execute('SELECT * FROM medications WHERE user_id = ?', [req.user.userId]);
+    const result = await Promise.all(meds.map(buildMed));
     res.json(result);
   } catch (err) { next(err); }
 });
 
-// Registrar dosis tomada
-router.post('/:id/taken', (req, res, next) => {
+router.post('/:id/taken', async (req, res, next) => {
   try {
-    const store = getStore();
-    const med = store.medications.find(m => m.id === req.params.id && m.user_id === req.user.userId);
+    const [[med]] = await pool.execute('SELECT id FROM medications WHERE id = ? AND user_id = ?', [req.params.id, req.user.userId]);
     if (!med) return res.status(404).json({ error: 'Medicamento no encontrado' });
     const now = new Date();
-    store.medication_taken_log.push({
-      id: uuidv4(),
-      medication_id: req.params.id,
-      user_id: req.user.userId,
-      horario: req.body.horario,
-      taken_at: now.toISOString(),
-      fecha: now.toISOString().split('T')[0],
-    });
-    save();
+    const today = now.toISOString().split('T')[0];
+    await pool.execute(
+      'INSERT INTO medication_taken_log (id,medication_id,user_id,horario,taken_at,fecha) VALUES (?,?,?,?,?,?)',
+      [uuidv4(), req.params.id, req.user.userId, req.body.horario, now.toISOString().slice(0, 19).replace('T', ' '), today]
+    );
     res.json({ success: true, timestamp: now.toISOString() });
   } catch (err) { next(err); }
 });
 
-// Obtener dosis tomadas hoy (para sincronizar estado al cargar la página)
-router.get('/taken-today', (req, res, next) => {
+router.get('/taken-today', async (req, res, next) => {
   try {
-    const { medication_taken_log } = getStore();
     const today = new Date().toISOString().split('T')[0];
-    const todayLogs = medication_taken_log.filter(
-      l => l.user_id === req.user.userId && l.fecha === today
+    const [logs] = await pool.execute(
+      'SELECT medication_id, horario, taken_at FROM medication_taken_log WHERE user_id = ? AND fecha = ?',
+      [req.user.userId, today]
     );
-    // Devolver mapa { "medId-horario": timestamp }
     const map = {};
-    todayLogs.forEach(l => {
-      map[`${l.medication_id}-${l.horario}`] = l.taken_at;
-    });
+    logs.forEach(l => { map[l.medication_id + '-' + fmtTime(l.horario)] = l.taken_at instanceof Date ? l.taken_at.toISOString() : l.taken_at; });
     res.json(map);
   } catch (err) { next(err); }
 });
 
-// Solicitar renovación de receta
-router.post('/:id/renewal', (req, res, next) => {
+router.post('/:id/renewal', async (req, res, next) => {
   try {
-    const store = getStore();
-    const med = store.medications.find(m => m.id === req.params.id && m.user_id === req.user.userId);
+    const [[med]] = await pool.execute('SELECT * FROM medications WHERE id = ? AND user_id = ?', [req.params.id, req.user.userId]);
     if (!med) return res.status(404).json({ error: 'Medicamento no encontrado' });
     if (!med.renovable) return res.status(400).json({ error: 'Este medicamento no es renovable' });
-
-    // Crear registro de solicitud de renovación
-    if (!store.renewal_requests) store.renewal_requests = [];
-
-    // Evitar solicitudes duplicadas pendientes
-    const pending = store.renewal_requests.find(
-      r => r.medication_id === med.id && r.user_id === req.user.userId && r.estado === 'pendiente'
+    const [[pending]] = await pool.execute(
+      "SELECT id FROM renewal_requests WHERE medication_id = ? AND user_id = ? AND estado = 'pendiente'",
+      [med.id, req.user.userId]
     );
-    if (pending) {
-      return res.status(409).json({ error: 'Ya tienes una solicitud de renovación pendiente para este medicamento' });
-    }
-
-    const request = {
-      id: uuidv4(),
-      medication_id: med.id,
-      medication_nombre: med.nombre,
-      medication_dosis: med.dosis,
-      user_id: req.user.userId,
-      medico: med.medico,
-      estado: 'pendiente',
-      created_at: new Date().toISOString(),
-    };
-    store.renewal_requests.push(request);
-    save();
-
-    res.json({ success: true, renewalId: request.id, message: 'Solicitud de renovación enviada exitosamente' });
+    if (pending) return res.status(409).json({ error: 'Ya tienes una solicitud de renovación pendiente para este medicamento' });
+    const id = uuidv4();
+    // Buscar doctor por nombre para asociar medico_id (puede ser NULL si no se encuentra)
+    const [[doctor]] = await pool.execute('SELECT id FROM doctors WHERE nombre = ?', [med.medico || '']);
+    await pool.execute(
+      "INSERT INTO renewal_requests (id,user_id,medication_id,medico_id,estado,created_at) VALUES (?,?,?,?,  'pendiente',NOW())",
+      [id, req.user.userId, med.id, doctor ? doctor.id : null]
+    );
+    res.json({ success: true, renewalId: id, message: 'Solicitud de renovación enviada exitosamente' });
   } catch (err) { next(err); }
 });
 

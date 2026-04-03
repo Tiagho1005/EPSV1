@@ -1,119 +1,106 @@
 const router = require('express').Router();
 const { v4: uuidv4 } = require('uuid');
 const auth = require('../middleware/auth');
-const { getStore, save } = require('../config/db');
+const { pool } = require('../config/mysql');
 const { sendAppointmentConfirmation } = require('../config/mailer');
+
+const fmtDate = (d) => {
+  if (!d) return null;
+  if (d instanceof Date) return d.toISOString().split('T')[0];
+  return String(d);
+};
+const fmtTime = (t) => {
+  if (!t) return null;
+  if (typeof t === 'string') return t.slice(0, 5);
+  const h = String(t.hours ?? 0).padStart(2, '0');
+  const m = String(t.minutes ?? 0).padStart(2, '0');
+  return h + ':' + m;
+};
 
 router.use(auth);
 
 const fmt = (a) => ({
-  id: a.id, especialidad: a.especialidad_id, especialidadNombre: a.especialidad_nombre,
-  medico: a.medico, medicoId: a.medico_id, sede: a.sede, sedeId: a.sede_id,
-  fecha: a.fecha, hora: a.hora, estado: a.estado, reagendamientos: a.reagendamientos,
+  id: a.id,
+  especialidad: a.especialidad_id,
+  especialidadNombre: a.especialidad_nombre,
+  medico: a.medico_nombre,
+  medicoId: a.medico_id,
+  sede: a.sede_nombre,
+  sedeId: a.sede_id,
+  fecha: fmtDate(a.fecha),
+  hora: fmtTime(a.hora),
+  estado: a.estado,
+  reagendamientos: a.reagendamientos,
   notas: a.notas || '',
   ...(a.diagnostico && { diagnostico: a.diagnostico }),
   ...(a.motivo_cancelacion && { motivoCancelacion: a.motivo_cancelacion }),
 });
 
-router.get('/', (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
-    const { appointments } = getStore();
-    const result = appointments
-      .filter(a => a.user_id === req.user.userId)
-      .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.hora.localeCompare(a.hora));
-    res.json(result.map(fmt));
+    const [rows] = await pool.execute(
+      'SELECT * FROM appointments WHERE user_id = ? ORDER BY fecha DESC, hora DESC',
+      [req.user.userId]
+    );
+    res.json(rows.map(fmt));
   } catch (err) { next(err); }
 });
 
 router.post('/', async (req, res, next) => {
   try {
-    const store = getStore();
     const { especialidad, especialidadNombre, medico, medicoId, sede, sedeId, fecha, hora, notas } = req.body;
-
-    // Validación de doble reserva: mismo médico, fecha, hora y no cancelada
-    const conflict = store.appointments.find(a =>
-      a.medico_id === medicoId &&
-      a.fecha === fecha &&
-      a.hora === hora &&
-      a.estado !== 'cancelada'
+    const [[conflict]] = await pool.execute(
+      "SELECT id FROM appointments WHERE medico_id = ? AND fecha = ? AND hora = ? AND estado != 'cancelada'",
+      [medicoId, fecha, hora]
     );
-    if (conflict) {
-      return res.status(409).json({ error: 'Este horario ya no está disponible. Selecciona otro horario.' });
-    }
-
-    const apt = {
-      id: uuidv4(), user_id: req.user.userId,
-      especialidad_id: especialidad, especialidad_nombre: especialidadNombre,
-      medico, medico_id: medicoId, sede, sede_id: sedeId,
-      fecha, hora, estado: 'confirmada', reagendamientos: 0,
-      notas: notas || '', diagnostico: null, motivo_cancelacion: null,
-    };
-    store.appointments.push(apt);
-    save();
-
-    // Enviar email de confirmación (no bloquear la respuesta si falla)
-    const user = store.users.find(u => u.id === req.user.userId);
+    if (conflict) return res.status(409).json({ error: 'Este horario ya no está disponible. Selecciona otro horario.' });
+    const id = uuidv4();
+    await pool.execute(
+      "INSERT INTO appointments (id,user_id,especialidad_id,especialidad_nombre,medico_id,medico_nombre,sede_id,sede_nombre,fecha,hora,estado,reagendamientos,notas) VALUES (?,?,?,?,?,?,?,?,?,?,'confirmada',0,?)",
+      [id, req.user.userId, especialidad, especialidadNombre, medicoId, medico, sedeId, sede, fecha, hora, notas || '']
+    );
+    const [[apt]] = await pool.execute('SELECT * FROM appointments WHERE id = ?', [id]);
+    const [[user]] = await pool.execute('SELECT email, nombre FROM users WHERE id = ?', [req.user.userId]);
     if (user) {
       sendAppointmentConfirmation({ to: user.email, nombre: user.nombre, appointment: fmt(apt) })
-        .catch(err => console.error('[Mailer] Error al enviar confirmación de cita:', err.message));
+        .catch(e => console.error('[Mailer] Error confirmación cita:', e.message));
     }
-
     res.status(201).json(fmt(apt));
   } catch (err) { next(err); }
 });
 
-router.patch('/:id/cancel', (req, res, next) => {
+router.patch('/:id/cancel', async (req, res, next) => {
   try {
-    const store = getStore();
-    const apt = store.appointments.find(a => a.id === req.params.id && a.user_id === req.user.userId);
+    const [[apt]] = await pool.execute('SELECT * FROM appointments WHERE id = ? AND user_id = ?', [req.params.id, req.user.userId]);
     if (!apt) return res.status(404).json({ error: 'Cita no encontrada' });
     if (apt.estado === 'cancelada') return res.status(400).json({ error: 'La cita ya está cancelada' });
-
-    // Validar ventana de cancelación de 24 horas
-    const appointmentDateTime = new Date(`${apt.fecha}T${apt.hora}:00`);
-    const hoursUntil = (appointmentDateTime - new Date()) / (1000 * 60 * 60);
-    if (hoursUntil >= 0 && hoursUntil < 24) {
+    const aptDT = new Date(fmtDate(apt.fecha) + 'T' + fmtTime(apt.hora) + ':00');
+    const hoursUntil = (aptDT - new Date()) / (1000 * 60 * 60);
+    if (hoursUntil >= 0 && hoursUntil < 24)
       return res.status(400).json({ error: 'No puedes cancelar con menos de 24 horas de anticipación. Contacta a tu sede.' });
-    }
-
-    apt.estado = 'cancelada';
-    apt.motivo_cancelacion = req.body.motivo || '';
-    save();
+    await pool.execute("UPDATE appointments SET estado = 'cancelada', motivo_cancelacion = ? WHERE id = ?", [req.body.motivo || '', req.params.id]);
     res.json({ success: true });
   } catch (err) { next(err); }
 });
 
-router.patch('/:id/reschedule', (req, res, next) => {
+router.patch('/:id/reschedule', async (req, res, next) => {
   try {
-    const store = getStore();
-    const apt = store.appointments.find(a => a.id === req.params.id && a.user_id === req.user.userId);
+    const [[apt]] = await pool.execute('SELECT * FROM appointments WHERE id = ? AND user_id = ?', [req.params.id, req.user.userId]);
     if (!apt) return res.status(404).json({ error: 'Cita no encontrada' });
-
     const { newDate, newTime } = req.body;
     if (!newDate || !newTime) return res.status(400).json({ error: 'newDate y newTime son requeridos' });
-
     if (apt.estado === 'cancelada' || apt.estado === 'completada')
       return res.status(400).json({ error: 'No puedes reagendar una cita cancelada o completada' });
-
     if ((apt.reagendamientos || 0) >= 2)
       return res.status(400).json({ error: 'Has alcanzado el límite de reagendamientos para esta cita' });
-
-    if (new Date(`${newDate}T${newTime}:00`) < new Date())
+    if (new Date(newDate + 'T' + newTime + ':00') < new Date())
       return res.status(400).json({ error: 'No puedes reagendar a una fecha pasada' });
-
-    const conflict = store.appointments.find(a =>
-      a.id !== apt.id &&
-      a.medico_id === apt.medico_id &&
-      a.fecha === newDate &&
-      a.hora === newTime &&
-      a.estado !== 'cancelada'
+    const [[conflict]] = await pool.execute(
+      "SELECT id FROM appointments WHERE id != ? AND medico_id = ? AND fecha = ? AND hora = ? AND estado != 'cancelada'",
+      [apt.id, apt.medico_id, newDate, newTime]
     );
     if (conflict) return res.status(409).json({ error: 'Este horario ya no está disponible. Selecciona otro horario.' });
-
-    apt.fecha = newDate;
-    apt.hora = newTime;
-    apt.reagendamientos = (apt.reagendamientos || 0) + 1;
-    save();
+    await pool.execute('UPDATE appointments SET fecha = ?, hora = ?, reagendamientos = reagendamientos + 1 WHERE id = ?', [newDate, newTime, req.params.id]);
     res.json({ success: true });
   } catch (err) { next(err); }
 });

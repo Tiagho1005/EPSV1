@@ -1,0 +1,883 @@
+{
+  "users": [
+    {
+      "id": "1",
+      "cedula": "1234567890",
+      "nombre": "Maria",
+      "apellido": "Rodriguez",
+      "email": "maria.rodriguez@email.com",
+      "celular": "3001234567",
+      "fecha_nacimiento": "1990-05-15",
+      "departamento": "Cundinamarca",
+      "municipio": "Bogota",
+      "direccion": "Cra 15 #82-45, Apto 301, Chapinero",
+      "foto_url": null,
+      "password_hash": "$2a$10$Gr9aSf3q20hDIc29H9/iXOH4NpWRuIm4MrKoyQ.tDSBDwppjUQmoe",
+      "activo": true,
+      "intentos_fallidos": 0,
+      "bloqueado_hasta": null,
+      "reset_code": null,
+      "reset_code_expires": null,
+      "fecha_registro": "2023-01-15"
+    },
+    {
+      "id": "2d51a9e0-9aed-4354-b86c-0abc0d8a5339",
+      "cedula": "12346721",
+      "nombre": "sofia",
+      "apellido": "montes",
+      "nombreCompleto": "sofia montes",
+      "email": "sofia@gmail.com",
+      "celular": "3525453212",
+      "fecha_nacimiento": "2005-11-27",
+      "departamento": "Antioquia",
+      "municipio": "Medellín",
+      "direccion": "calle 14 #  72",
+      "foto_url": null,
+      "password_hash": "$2a$10$9YRD0Y2NUuRPoixgI0.Pe.Ogl5QB2ZAoFe9m9rJ4n9oNjgoWMRl2y",
+      "role": "paciente",
+      "activo": true,
+      "intentos_fallidos": 0,
+      "bloqueado_hasta": null,
+      "reset_code": null,
+      "reset_code_expires": null,
+      "fecha_registro": "2026-03-17"
+    },
+    {
+      "id": "f10e9215-048d-4835-af4c-67e36b706d0b",
+      "cedula": "43190106",
+      "nombre": "alejandra",
+      "apellido": "marin",
+      "nombreCompleto": "alejandra marin",
+      "email": "aleja@gmail.com",
+      "celular": "3177264277",
+      "fecha_nacimiento": "1985-05-18",
+      "departamento": "Antioquia",
+      "municipio": "Medellín",
+      "direccion": "calle 14 # 72",
+      "foto_url": null,
+      "password_hash": "$2a$10$D.qX9kwCbX9r7M7asclJLO.5yl/LSx5lOe877nRbAWff9IOYiTRdi",
+      "role": "paciente",
+      "activo": true,
+      "intentos_fallidos": 0,
+      "bloqueado_hasta": null,
+      "reset_code": null,
+      "reset_code_expires": null,
+      "fecha_registro": "2026-03-17"
+    }
+  ],
+  "specialties": [
+    {
+      "id": "medicina-general",
+      "nombre": "Medicina General",
+      "icono": "Stethoscope",
+      "descripcion": "Consulta medica general y preventiva"
+    },
+    {
+      "id": "odontologia",
+      "nombre": "Odontologia",
+      "icono": "Smile",
+      "descripcion": "Salud dental y bucal"
+    },
+    {
+      "id": "pediatria",
+      "nombre": "Pediatria",
+      "icono": "Baby",
+      "descripcion": "Atencion medica infantil"
+    },
+    {
+      "id": "ginecologia",
+      "nombre": "Ginecologia",
+      "icono": "Heart",
+      "descripcion": "Salud de la mujer"
+    },
+    {
+      "id": "cardiologia",
+      "nombre": "Cardiologia",
+      "icono": "HeartPulse",
+      "descripcion": "Salud cardiovascular"
+    },
+    {
+      "id": "dermatologia",
+      "nombre": "Dermatologia",
+      "icono": "Sparkles",
+      "descripcion": "Cuidado de la piel"
+    },
+    {
+      "id": "oftalmologia",
+      "nombre": "Oftalmologia",
+      "icono": "Eye",
+      "descripcion": "Salud visual"
+    },
+    {
+      "id": "psicologia",
+      "nombre": "Psicologia",
+      "icono": "Brain",
+      "descripcion": "Salud mental y bienestar emocional"
+    }
+  ],
+  "locations": [
+    {
+      "id": "norte",
+      "nombre": "Sede Norte",
+      "direccion": "Calle 100 #15-20",
+      "telefono": "601-123-4567",
+      "horario": "Lun-Vie 6:00-20:00, Sab 7:00-14:00",
+      "lat": 4.6836,
+      "lng": -74.0479
+    },
+    {
+      "id": "centro",
+      "nombre": "Sede Centro",
+      "direccion": "Carrera 7 #32-16",
+      "telefono": "601-234-5678",
+      "horario": "Lun-Vie 6:00-20:00, Sab 7:00-14:00",
+      "lat": 4.6097,
+      "lng": -74.0817
+    },
+    {
+      "id": "sur",
+      "nombre": "Sede Sur",
+      "direccion": "Autopista Sur #68-50",
+      "telefono": "601-345-6789",
+      "horario": "Lun-Vie 7:00-19:00, Sab 8:00-13:00",
+      "lat": 4.5709,
+      "lng": -74.134
+    },
+    {
+      "id": "occidental",
+      "nombre": "Sede Occidental",
+      "direccion": "Calle 13 #50-25",
+      "telefono": "601-456-7890",
+      "horario": "Lun-Vie 7:00-19:00, Sab 8:00-13:00",
+      "lat": 4.628,
+      "lng": -74.1127
+    }
+  ],
+  "doctors": [
+    {
+      "id": "1",
+      "nombre": "Dr. Carlos Mendoza",
+      "especialidad_id": "medicina-general",
+      "foto": null,
+      "experiencia": 15,
+      "rating": 4.8,
+      "sedes": [
+        "norte",
+        "centro"
+      ],
+      "disponibilidad": {
+        "lunes": [
+          "08:00",
+          "08:30",
+          "09:00",
+          "09:30",
+          "10:00",
+          "10:30",
+          "14:00",
+          "14:30",
+          "15:00"
+        ],
+        "martes": [
+          "08:00",
+          "08:30",
+          "09:00",
+          "09:30",
+          "10:00",
+          "14:00",
+          "14:30"
+        ],
+        "miercoles": [
+          "08:00",
+          "08:30",
+          "09:00",
+          "09:30",
+          "10:00",
+          "10:30"
+        ],
+        "jueves": [
+          "14:00",
+          "14:30",
+          "15:00",
+          "15:30",
+          "16:00"
+        ],
+        "viernes": [
+          "08:00",
+          "08:30",
+          "09:00",
+          "09:30",
+          "10:00"
+        ]
+      }
+    },
+    {
+      "id": "2",
+      "nombre": "Dra. Laura Perez",
+      "especialidad_id": "ginecologia",
+      "foto": null,
+      "experiencia": 12,
+      "rating": 4.9,
+      "sedes": [
+        "norte",
+        "sur"
+      ],
+      "disponibilidad": {
+        "lunes": [
+          "09:00",
+          "09:30",
+          "10:00",
+          "10:30",
+          "11:00"
+        ],
+        "martes": [
+          "14:00",
+          "14:30",
+          "15:00",
+          "15:30"
+        ],
+        "miercoles": [
+          "09:00",
+          "09:30",
+          "10:00",
+          "10:30"
+        ],
+        "jueves": [
+          "09:00",
+          "09:30",
+          "10:00",
+          "14:00",
+          "14:30"
+        ],
+        "viernes": [
+          "08:00",
+          "08:30",
+          "09:00"
+        ]
+      }
+    },
+    {
+      "id": "3",
+      "nombre": "Dra. Ana Martinez",
+      "especialidad_id": "pediatria",
+      "foto": null,
+      "experiencia": 8,
+      "rating": 4.7,
+      "sedes": [
+        "centro",
+        "occidental"
+      ],
+      "disponibilidad": {
+        "lunes": [
+          "08:00",
+          "08:30",
+          "09:00",
+          "09:30"
+        ],
+        "martes": [
+          "08:00",
+          "08:30",
+          "09:00",
+          "14:00",
+          "14:30",
+          "15:00"
+        ],
+        "miercoles": [
+          "10:00",
+          "10:30",
+          "11:00",
+          "11:30"
+        ],
+        "jueves": [
+          "08:00",
+          "08:30",
+          "09:00",
+          "09:30"
+        ],
+        "viernes": [
+          "14:00",
+          "14:30",
+          "15:00",
+          "15:30"
+        ]
+      }
+    },
+    {
+      "id": "4",
+      "nombre": "Dr. Miguel Angel Ruiz",
+      "especialidad_id": "cardiologia",
+      "foto": null,
+      "experiencia": 20,
+      "rating": 4.9,
+      "sedes": [
+        "norte"
+      ],
+      "disponibilidad": {
+        "lunes": [
+          "10:00",
+          "10:30",
+          "11:00",
+          "11:30"
+        ],
+        "martes": [
+          "08:00",
+          "08:30",
+          "09:00",
+          "09:30"
+        ],
+        "miercoles": [
+          "14:00",
+          "14:30",
+          "15:00",
+          "15:30",
+          "16:00"
+        ],
+        "jueves": [
+          "10:00",
+          "10:30",
+          "11:00"
+        ],
+        "viernes": [
+          "08:00",
+          "08:30",
+          "09:00",
+          "09:30",
+          "10:00"
+        ]
+      }
+    },
+    {
+      "id": "5",
+      "nombre": "Dr. Fernando Torres",
+      "especialidad_id": "dermatologia",
+      "foto": null,
+      "experiencia": 10,
+      "rating": 4.6,
+      "sedes": [
+        "centro",
+        "sur"
+      ],
+      "disponibilidad": {
+        "lunes": [
+          "08:00",
+          "08:30",
+          "09:00"
+        ],
+        "martes": [
+          "14:00",
+          "14:30",
+          "15:00",
+          "15:30"
+        ],
+        "miercoles": [
+          "08:00",
+          "08:30",
+          "09:00",
+          "09:30",
+          "10:00"
+        ],
+        "jueves": [
+          "14:00",
+          "14:30",
+          "15:00"
+        ],
+        "viernes": [
+          "08:00",
+          "08:30",
+          "09:00",
+          "09:30"
+        ]
+      }
+    },
+    {
+      "id": "6",
+      "nombre": "Dr. Jorge Sanchez",
+      "especialidad_id": "odontologia",
+      "foto": null,
+      "experiencia": 7,
+      "rating": 4.5,
+      "sedes": [
+        "norte",
+        "centro",
+        "sur"
+      ],
+      "disponibilidad": {
+        "lunes": [
+          "08:00",
+          "08:30",
+          "09:00",
+          "09:30",
+          "10:00",
+          "10:30"
+        ],
+        "martes": [
+          "08:00",
+          "08:30",
+          "09:00",
+          "09:30"
+        ],
+        "miercoles": [
+          "14:00",
+          "14:30",
+          "15:00",
+          "15:30",
+          "16:00"
+        ],
+        "jueves": [
+          "08:00",
+          "08:30",
+          "09:00",
+          "09:30",
+          "10:00"
+        ],
+        "viernes": [
+          "14:00",
+          "14:30",
+          "15:00"
+        ]
+      }
+    },
+    {
+      "id": "7",
+      "nombre": "Dra. Patricia Gomez",
+      "especialidad_id": "oftalmologia",
+      "foto": null,
+      "experiencia": 14,
+      "rating": 4.8,
+      "sedes": [
+        "norte",
+        "centro"
+      ],
+      "disponibilidad": {
+        "lunes": [
+          "09:00",
+          "09:30",
+          "10:00",
+          "10:30"
+        ],
+        "martes": [
+          "14:00",
+          "14:30",
+          "15:00"
+        ],
+        "miercoles": [
+          "09:00",
+          "09:30",
+          "10:00"
+        ],
+        "jueves": [
+          "14:00",
+          "14:30",
+          "15:00",
+          "15:30"
+        ],
+        "viernes": [
+          "09:00",
+          "09:30",
+          "10:00",
+          "10:30"
+        ]
+      }
+    },
+    {
+      "id": "8",
+      "nombre": "Dr. Andres Ramirez",
+      "especialidad_id": "psicologia",
+      "foto": null,
+      "experiencia": 9,
+      "rating": 4.7,
+      "sedes": [
+        "centro",
+        "sur"
+      ],
+      "disponibilidad": {
+        "lunes": [
+          "08:00",
+          "09:00",
+          "10:00",
+          "11:00"
+        ],
+        "martes": [
+          "14:00",
+          "15:00",
+          "16:00"
+        ],
+        "miercoles": [
+          "08:00",
+          "09:00",
+          "10:00"
+        ],
+        "jueves": [
+          "14:00",
+          "15:00",
+          "16:00",
+          "17:00"
+        ],
+        "viernes": [
+          "08:00",
+          "09:00",
+          "10:00"
+        ]
+      }
+    }
+  ],
+  "appointments": [
+    {
+      "id": "1",
+      "user_id": "1",
+      "especialidad_id": "medicina-general",
+      "especialidad_nombre": "Medicina General",
+      "medico": "Dr. Carlos Mendoza",
+      "medico_id": "1",
+      "sede": "Sede Norte",
+      "sede_id": "norte",
+      "fecha": "2026-03-25",
+      "hora": "10:00",
+      "estado": "confirmada",
+      "reagendamientos": 0,
+      "notas": "",
+      "diagnostico": null,
+      "motivo_cancelacion": null
+    },
+    {
+      "id": "2",
+      "user_id": "1",
+      "especialidad_id": "cardiologia",
+      "especialidad_nombre": "Cardiologia",
+      "medico": "Dr. Miguel Angel Ruiz",
+      "medico_id": "4",
+      "sede": "Sede Norte",
+      "sede_id": "norte",
+      "fecha": "2026-04-10",
+      "hora": "15:30",
+      "estado": "pendiente",
+      "reagendamientos": 1,
+      "notas": "",
+      "diagnostico": null,
+      "motivo_cancelacion": null
+    },
+    {
+      "id": "3",
+      "user_id": "1",
+      "especialidad_id": "odontologia",
+      "especialidad_nombre": "Odontologia",
+      "medico": "Dr. Jorge Sanchez",
+      "medico_id": "6",
+      "sede": "Sede Centro",
+      "sede_id": "centro",
+      "fecha": "2024-12-20",
+      "hora": "09:00",
+      "estado": "completada",
+      "reagendamientos": 0,
+      "notas": "Proxima limpieza en 6 meses.",
+      "diagnostico": "Limpieza dental de rutina. Se observa buena salud dental general.",
+      "motivo_cancelacion": null
+    },
+    {
+      "id": "4",
+      "user_id": "1",
+      "especialidad_id": "medicina-general",
+      "especialidad_nombre": "Medicina General",
+      "medico": "Dr. Carlos Mendoza",
+      "medico_id": "1",
+      "sede": "Sede Norte",
+      "sede_id": "norte",
+      "fecha": "2024-11-10",
+      "hora": "08:30",
+      "estado": "completada",
+      "reagendamientos": 0,
+      "notas": "Continuar con Losartan 50mg.",
+      "diagnostico": "Control de rutina. Presion arterial estable. Se ajusta medicacion.",
+      "motivo_cancelacion": null
+    },
+    {
+      "id": "5",
+      "user_id": "1",
+      "especialidad_id": "dermatologia",
+      "especialidad_nombre": "Dermatologia",
+      "medico": "Dr. Fernando Torres",
+      "medico_id": "5",
+      "sede": "Sede Sur",
+      "sede_id": "sur",
+      "fecha": "2024-10-05",
+      "hora": "14:00",
+      "estado": "cancelada",
+      "reagendamientos": 0,
+      "notas": "",
+      "diagnostico": null,
+      "motivo_cancelacion": "No pude asistir por motivos personales"
+    },
+    {
+      "id": "f7fe7828-6fec-42d6-8b9a-472560724282",
+      "user_id": "f10e9215-048d-4835-af4c-67e36b706d0b",
+      "especialidad_id": "medicina-general",
+      "especialidad_nombre": "Medicina General",
+      "medico": "Dr. Carlos Mendoza",
+      "medico_id": "1",
+      "sede": "Sede Norte",
+      "sede_id": "norte",
+      "fecha": "2026-03-18",
+      "hora": "08:00",
+      "estado": "cancelada",
+      "reagendamientos": 0,
+      "notas": "",
+      "diagnostico": null,
+      "motivo_cancelacion": "tengo sueño"
+    },
+    {
+      "id": "868f6584-4ac6-414c-9f50-07cdfc670bd2",
+      "user_id": "f10e9215-048d-4835-af4c-67e36b706d0b",
+      "especialidad_id": "medicina-general",
+      "especialidad_nombre": "Medicina General",
+      "medico": "Dr. Carlos Mendoza",
+      "medico_id": "1",
+      "sede": "Sede Norte",
+      "sede_id": "norte",
+      "fecha": "2026-03-19",
+      "hora": "14:00",
+      "estado": "confirmada",
+      "reagendamientos": 0,
+      "notas": "",
+      "diagnostico": null,
+      "motivo_cancelacion": null
+    }
+  ],
+  "medications": [
+    {
+      "id": "1",
+      "user_id": "1",
+      "nombre": "Losartan",
+      "dosis": "50mg",
+      "presentacion": "Tableta",
+      "frecuencia": "Cada 12 horas",
+      "horarios": [
+        "08:00",
+        "20:00"
+      ],
+      "fecha_inicio": "2026-03-01",
+      "fecha_fin": "2026-03-27",
+      "medico": "Dr. Miguel Angel Ruiz",
+      "renovable": true,
+      "instrucciones": "Tomar con un vaso de agua. No consumir con alimentos ricos en potasio."
+    },
+    {
+      "id": "2",
+      "user_id": "1",
+      "nombre": "Omeprazol",
+      "dosis": "20mg",
+      "presentacion": "Capsula",
+      "frecuencia": "Una vez al dia en ayunas",
+      "horarios": [
+        "07:00"
+      ],
+      "fecha_inicio": "2026-03-01",
+      "fecha_fin": "2026-04-01",
+      "medico": "Dr. Carlos Mendoza",
+      "renovable": true,
+      "instrucciones": "Tomar 30 minutos antes del desayuno. No masticar la capsula."
+    },
+    {
+      "id": "3",
+      "user_id": "1",
+      "nombre": "Amoxicilina",
+      "dosis": "500mg",
+      "presentacion": "Capsula",
+      "frecuencia": "Cada 8 horas",
+      "horarios": [
+        "08:00",
+        "16:00",
+        "00:00"
+      ],
+      "fecha_inicio": "2026-03-09",
+      "fecha_fin": "2026-03-15",
+      "medico": "Dr. Carlos Mendoza",
+      "renovable": false,
+      "instrucciones": "Completar todo el tratamiento. Tomar con o sin alimentos."
+    }
+  ],
+  "medication_taken_log": [],
+  "medical_history": [
+    {
+      "id": "1",
+      "user_id": "1",
+      "fecha": "2024-12-20",
+      "especialidad": "Odontologia",
+      "medico": "Dr. Jorge Sanchez",
+      "sede": "Sede Centro",
+      "diagnostico": "Limpieza dental de rutina",
+      "notas": "Se realizo limpieza dental profilactica. Buen estado general de la dentadura.",
+      "recetas": [],
+      "examenes": []
+    },
+    {
+      "id": "2",
+      "user_id": "1",
+      "fecha": "2024-11-10",
+      "especialidad": "Medicina General",
+      "medico": "Dr. Carlos Mendoza",
+      "sede": "Sede Norte",
+      "diagnostico": "Hipertension arterial controlada - Control de rutina",
+      "notas": "Paciente con HTA en tratamiento con Losartan 50mg. Presion arterial 120/80 mmHg.",
+      "recetas": [
+        "Losartan 50mg - 1 tableta cada 12 horas por 30 dias",
+        "Omeprazol 20mg - 1 capsula en ayunas por 30 dias"
+      ],
+      "examenes": [
+        "Hemograma completo",
+        "Perfil lipidico"
+      ]
+    },
+    {
+      "id": "3",
+      "user_id": "1",
+      "fecha": "2024-09-15",
+      "especialidad": "Cardiologia",
+      "medico": "Dr. Miguel Angel Ruiz",
+      "sede": "Sede Norte",
+      "diagnostico": "Evaluacion cardiovascular - Sin hallazgos significativos",
+      "notas": "Electrocardiograma normal. Ecocardiograma sin alteraciones. Funcion cardiaca preservada.",
+      "recetas": [],
+      "examenes": [
+        "Electrocardiograma",
+        "Ecocardiograma"
+      ]
+    },
+    {
+      "id": "4",
+      "user_id": "1",
+      "fecha": "2024-07-20",
+      "especialidad": "Medicina General",
+      "medico": "Dr. Carlos Mendoza",
+      "sede": "Sede Norte",
+      "diagnostico": "Infeccion respiratoria aguda",
+      "notas": "Paciente presenta tos, congestion nasal y fiebre de 38.5C desde hace 3 dias.",
+      "recetas": [
+        "Amoxicilina 500mg - 1 capsula cada 8 horas por 7 dias",
+        "Acetaminofen 500mg - 1 tableta cada 6 horas si presenta fiebre"
+      ],
+      "examenes": []
+    }
+  ],
+  "departments": [
+    {
+      "id": "cundinamarca",
+      "nombre": "Cundinamarca",
+      "municipios": [
+        "Bogota",
+        "Soacha",
+        "Chia",
+        "Zipaquira",
+        "Facatativa",
+        "Girardot",
+        "Fusagasuga",
+        "Madrid"
+      ]
+    },
+    {
+      "id": "antioquia",
+      "nombre": "Antioquia",
+      "municipios": [
+        "Medellin",
+        "Bello",
+        "Itagui",
+        "Envigado",
+        "Rionegro",
+        "Apartado",
+        "Sabaneta",
+        "Copacabana"
+      ]
+    },
+    {
+      "id": "valle",
+      "nombre": "Valle del Cauca",
+      "municipios": [
+        "Cali",
+        "Buenaventura",
+        "Palmira",
+        "Tulua",
+        "Cartago",
+        "Buga",
+        "Jamundi",
+        "Yumbo"
+      ]
+    },
+    {
+      "id": "atlantico",
+      "nombre": "Atlantico",
+      "municipios": [
+        "Barranquilla",
+        "Soledad",
+        "Malambo",
+        "Sabanalarga",
+        "Puerto Colombia",
+        "Galapa"
+      ]
+    },
+    {
+      "id": "bolivar",
+      "nombre": "Bolivar",
+      "municipios": [
+        "Cartagena",
+        "Magangu",
+        "Turbaco",
+        "Arjona",
+        "Carmen de Bolivar",
+        "San Juan Nepomuceno"
+      ]
+    },
+    {
+      "id": "santander",
+      "nombre": "Santander",
+      "municipios": [
+        "Bucaramanga",
+        "Floridablanca",
+        "Giron",
+        "Piedecuesta",
+        "Barrancabermeja",
+        "San Gil"
+      ]
+    },
+    {
+      "id": "norte-santander",
+      "nombre": "Norte de Santander",
+      "municipios": [
+        "Cucuta",
+        "Ocana",
+        "Pamplona",
+        "Villa del Rosario",
+        "Los Patios"
+      ]
+    },
+    {
+      "id": "risaralda",
+      "nombre": "Risaralda",
+      "municipios": [
+        "Pereira",
+        "Dosquebradas",
+        "Santa Rosa de Cabal",
+        "La Virginia"
+      ]
+    },
+    {
+      "id": "tolima",
+      "nombre": "Tolima",
+      "municipios": [
+        "Ibague",
+        "Espinal",
+        "Melgar",
+        "Honda",
+        "Mariquita"
+      ]
+    },
+    {
+      "id": "huila",
+      "nombre": "Huila",
+      "municipios": [
+        "Neiva",
+        "Pitalito",
+        "Garzon",
+        "La Plata",
+        "San Agustin"
+      ]
+    }
+  ]
+}
