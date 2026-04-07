@@ -10,12 +10,6 @@ CREATE DATABASE IF NOT EXISTS eps_db
 
 USE eps_db;
 
--- ============================================================
---  BLOQUE 1 — CATÁLOGOS (tablas sin dependencias externas)
---  Deben crearse primero porque otras tablas las referencian.
--- ============================================================
-
--- Especialidades médicas (medicina-general, cardiologia, etc.)
 CREATE TABLE IF NOT EXISTS specialties (
   id          VARCHAR(50)   NOT NULL,
   nombre      VARCHAR(100)  NOT NULL,
@@ -24,7 +18,6 @@ CREATE TABLE IF NOT EXISTS specialties (
   PRIMARY KEY (id)
 );
 
--- Sedes / centros de atención
 CREATE TABLE IF NOT EXISTS locations (
   id        VARCHAR(50)   NOT NULL,
   nombre    VARCHAR(100)  NOT NULL,
@@ -36,14 +29,12 @@ CREATE TABLE IF NOT EXISTS locations (
   PRIMARY KEY (id)
 );
 
--- Departamentos de Colombia (para el registro de pacientes)
 CREATE TABLE IF NOT EXISTS departments (
   id     VARCHAR(50)  NOT NULL,
   nombre VARCHAR(100) NOT NULL,
   PRIMARY KEY (id)
 );
 
--- Municipios por departamento (relación 1:N con departments)
 CREATE TABLE IF NOT EXISTS municipalities (
   id            INT          NOT NULL AUTO_INCREMENT,
   department_id VARCHAR(50)  NOT NULL,
@@ -52,26 +43,19 @@ CREATE TABLE IF NOT EXISTS municipalities (
   FOREIGN KEY (department_id) REFERENCES departments(id) ON DELETE CASCADE
 );
 
--- ============================================================
---  BLOQUE 2 — USUARIOS
---  Se crea antes que doctors porque doctors referencia users,
---  pero users también referencia doctors (medico_id).
---  Se resuelve con ALTER TABLE después de crear doctors.
--- ============================================================
 
 CREATE TABLE IF NOT EXISTS users (
   id                   VARCHAR(36)  NOT NULL,
   cedula               VARCHAR(20)  NOT NULL,
   nombre               VARCHAR(100) NOT NULL,
   apellido             VARCHAR(100) NOT NULL,
-  -- nombreCompleto es derivado (nombre + apellido), no se almacena
   email                VARCHAR(150) NOT NULL,
   celular              VARCHAR(20)  NULL,
   fecha_nacimiento     DATE         NULL,
   departamento         VARCHAR(50)  NULL,
   municipio            VARCHAR(100) NULL,
   direccion            VARCHAR(255) NULL,
-  foto_url             MEDIUMTEXT   NULL,        -- imagen en base64 (~2 MB máx)
+  foto_url             MEDIUMTEXT   NULL,       
   password_hash        VARCHAR(255) NOT NULL,
   role                 ENUM('paciente','medico','admin') NOT NULL DEFAULT 'paciente',
   activo               TINYINT(1)   NOT NULL DEFAULT 1,
@@ -80,42 +64,32 @@ CREATE TABLE IF NOT EXISTS users (
   reset_code           VARCHAR(10)  NULL,
   reset_code_expires   DATETIME     NULL,
   fecha_registro       DATE         NOT NULL DEFAULT (CURRENT_DATE),
-  -- reminder_preferences se descompone en dos columnas simples
   reminder_email       TINYINT(1)   NOT NULL DEFAULT 1,
   reminder_advance_min SMALLINT     NOT NULL DEFAULT 15,
-  -- medico_id: solo aplica cuando role = 'medico'
-  -- FK se agrega después de la tabla doctors (evita dependencia circular)
   medico_id            VARCHAR(36)  NULL,
   PRIMARY KEY (id),
   UNIQUE KEY uq_users_cedula (cedula),
   UNIQUE KEY uq_users_email  (email)
 );
 
--- ============================================================
---  BLOQUE 3 — MÉDICOS
--- ============================================================
-
 CREATE TABLE IF NOT EXISTS doctors (
   id              VARCHAR(36)        NOT NULL,
-  -- user_id: cuenta de acceso del médico en el sistema (puede ser NULL si el
-  -- médico existe en catálogo pero aún no tiene usuario registrado)
   user_id         VARCHAR(36)        NULL,
   especialidad_id VARCHAR(50)        NOT NULL,
   nombre          VARCHAR(150)       NOT NULL,
   foto            VARCHAR(500)       NULL,
-  experiencia     TINYINT UNSIGNED   NOT NULL DEFAULT 0,   -- años
+  experiencia     TINYINT UNSIGNED   NOT NULL DEFAULT 0,   
   rating          DECIMAL(3,2)       NOT NULL DEFAULT 5.00,
   PRIMARY KEY (id),
   FOREIGN KEY (user_id)         REFERENCES users(id)       ON DELETE SET NULL,
   FOREIGN KEY (especialidad_id) REFERENCES specialties(id) ON DELETE RESTRICT
 );
 
--- FK circular users → doctors: se resuelve aquí, después de crear doctors
+
 ALTER TABLE users
   ADD CONSTRAINT fk_users_medico
   FOREIGN KEY (medico_id) REFERENCES doctors(id) ON DELETE SET NULL;
 
--- Sedes donde atiende cada médico (relación N:M)
 CREATE TABLE IF NOT EXISTS doctor_sedes (
   doctor_id VARCHAR(36) NOT NULL,
   sede_id   VARCHAR(50) NOT NULL,
@@ -124,8 +98,7 @@ CREATE TABLE IF NOT EXISTS doctor_sedes (
   FOREIGN KEY (sede_id)   REFERENCES locations(id) ON DELETE CASCADE
 );
 
--- Horarios de disponibilidad semanal del médico
--- Un registro = un slot disponible (ej: lunes 08:00)
+
 CREATE TABLE IF NOT EXISTS doctor_disponibilidad (
   id        INT         NOT NULL AUTO_INCREMENT,
   doctor_id VARCHAR(36) NOT NULL,
@@ -136,9 +109,7 @@ CREATE TABLE IF NOT EXISTS doctor_disponibilidad (
   FOREIGN KEY (doctor_id) REFERENCES doctors(id) ON DELETE CASCADE
 );
 
--- ============================================================
---  BLOQUE 4 — CITAS MÉDICAS
--- ============================================================
+
 
 CREATE TABLE IF NOT EXISTS appointments (
   id                  VARCHAR(36)  NOT NULL,
@@ -162,16 +133,13 @@ CREATE TABLE IF NOT EXISTS appointments (
   FOREIGN KEY (especialidad_id) REFERENCES specialties(id) ON DELETE RESTRICT,
   FOREIGN KEY (medico_id)       REFERENCES doctors(id)     ON DELETE RESTRICT,
   FOREIGN KEY (sede_id)         REFERENCES locations(id)   ON DELETE RESTRICT,
-  -- índices para las consultas más frecuentes
+  
   INDEX idx_apt_user    (user_id),
   INDEX idx_apt_medico  (medico_id),
   INDEX idx_apt_fecha   (fecha),
   INDEX idx_apt_estado  (estado)
 );
 
--- ============================================================
---  BLOQUE 5 — MEDICAMENTOS
--- ============================================================
 
 CREATE TABLE IF NOT EXISTS medications (
   id           VARCHAR(36)  NOT NULL,
@@ -182,7 +150,7 @@ CREATE TABLE IF NOT EXISTS medications (
   frecuencia   VARCHAR(100) NOT NULL,
   fecha_inicio DATE         NOT NULL,
   fecha_fin    DATE         NULL,
-  medico       VARCHAR(150) NULL,   -- nombre del médico que recetó
+  medico       VARCHAR(150) NULL,   
   renovable    TINYINT(1)   NOT NULL DEFAULT 0,
   instrucciones TEXT        NULL,
   PRIMARY KEY (id),
@@ -190,8 +158,6 @@ CREATE TABLE IF NOT EXISTS medications (
   INDEX idx_med_user (user_id)
 );
 
--- Horarios de toma del medicamento (1 medicamento → N horarios)
--- Ej: Losartan → ['08:00', '20:00']  →  2 filas
 CREATE TABLE IF NOT EXISTS medication_horarios (
   id            INT         NOT NULL AUTO_INCREMENT,
   medication_id VARCHAR(36) NOT NULL,
@@ -200,7 +166,6 @@ CREATE TABLE IF NOT EXISTS medication_horarios (
   FOREIGN KEY (medication_id) REFERENCES medications(id) ON DELETE CASCADE
 );
 
--- Log de tomas registradas por el paciente
 CREATE TABLE IF NOT EXISTS medication_taken_log (
   id            VARCHAR(36) NOT NULL,
   medication_id VARCHAR(36) NOT NULL,
@@ -214,7 +179,6 @@ CREATE TABLE IF NOT EXISTS medication_taken_log (
   INDEX idx_log_user_fecha (user_id, fecha)
 );
 
--- Solicitudes de renovación de medicamento
 CREATE TABLE IF NOT EXISTS renewal_requests (
   id            VARCHAR(36) NOT NULL,
   user_id       VARCHAR(36) NOT NULL,
@@ -228,9 +192,7 @@ CREATE TABLE IF NOT EXISTS renewal_requests (
   FOREIGN KEY (medico_id)     REFERENCES doctors(id)     ON DELETE RESTRICT
 );
 
--- ============================================================
---  BLOQUE 6 — HISTORIAL MÉDICO
--- ============================================================
+
 
 CREATE TABLE IF NOT EXISTS medical_history (
   id          VARCHAR(36)  NOT NULL,
@@ -246,7 +208,6 @@ CREATE TABLE IF NOT EXISTS medical_history (
   INDEX idx_hist_user (user_id)
 );
 
--- Recetas asociadas a una consulta (1:N)
 CREATE TABLE IF NOT EXISTS medical_history_recetas (
   id         INT          NOT NULL AUTO_INCREMENT,
   history_id VARCHAR(36)  NOT NULL,
@@ -255,7 +216,7 @@ CREATE TABLE IF NOT EXISTS medical_history_recetas (
   FOREIGN KEY (history_id) REFERENCES medical_history(id) ON DELETE CASCADE
 );
 
--- Exámenes solicitados en una consulta (1:N)
+
 CREATE TABLE IF NOT EXISTS medical_history_examenes (
   id         INT          NOT NULL AUTO_INCREMENT,
   history_id VARCHAR(36)  NOT NULL,
@@ -264,12 +225,6 @@ CREATE TABLE IF NOT EXISTS medical_history_examenes (
   FOREIGN KEY (history_id) REFERENCES medical_history(id) ON DELETE CASCADE
 );
 
--- ============================================================
---  BLOQUE 7 — MÉTRICAS DE SALUD
---  La presión arterial tiene dos valores (sistólica/diastólica).
---  El resto tiene un único valor numérico.
---  Ambos casos se manejan en una sola tabla con columnas opcionales.
--- ============================================================
 
 CREATE TABLE IF NOT EXISTS health_metrics (
   id               VARCHAR(36)  NOT NULL,
@@ -298,9 +253,7 @@ CREATE TABLE IF NOT EXISTS health_metrics (
   INDEX idx_hm_fecha     (fecha)
 );
 
--- ============================================================
---  BLOQUE 8 — AUTORIZACIONES MÉDICAS
--- ============================================================
+
 
 CREATE TABLE IF NOT EXISTS authorizations (
   id             VARCHAR(36)  NOT NULL,

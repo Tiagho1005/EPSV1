@@ -1,7 +1,4 @@
-/**
- * Pruebas completas de la API migrada a MySQL
- * Ejecutar: node backend/database/run_tests.js
- */
+
 const http = require('http');
 
 const BASE = 'http://localhost:3000/api';
