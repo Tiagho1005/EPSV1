@@ -44,8 +44,8 @@ const request = async (method, path, body = null, auth = true) => {
 
 export const api = {
   // Auth
-  login: (cedula, password, portal) =>
-    request('POST', '/auth/login', { cedula, password, portal }, false),
+  login: (cedula, password) =>
+    request('POST', '/auth/login', { cedula, password }, false),
 
   register: (userData) =>
     request('POST', '/auth/register', userData, false),

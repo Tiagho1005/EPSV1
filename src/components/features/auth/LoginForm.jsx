@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { HeartPulse, IdCard, Lock, AlertTriangle, Stethoscope, Shield } from 'lucide-react';
+import { HeartPulse, IdCard, Lock, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 import { useToast } from '../../../context/ToastContext';
 import Input from '../../ui/Input';
@@ -9,7 +9,7 @@ import useForm from '../../../hooks/useForm';
 import { validators } from '../../../utils/validators';
 import { ROUTES, MAX_LOGIN_ATTEMPTS } from '../../../utils/constants';
 
-const LoginForm = ({ onError, portal = 'paciente', onNavigate }) => {
+const LoginForm = ({ onError, onNavigate }) => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const { showToast } = useToast();
@@ -27,7 +27,7 @@ const LoginForm = ({ onError, portal = 'paciente', onNavigate }) => {
   const onSubmit = async (formValues) => {
     setLoginError('');
     try {
-      const result = await login(formValues.cedula, formValues.password, portal);
+      const result = await login(formValues.cedula, formValues.password);
       setFailedAttempts(0);
       showToast({
         type: 'success',
@@ -41,7 +41,7 @@ const LoginForm = ({ onError, portal = 'paciente', onNavigate }) => {
     } catch (error) {
       const newAttempts = failedAttempts + 1;
       setFailedAttempts(newAttempts);
-      setLoginError(error.message);
+      setLoginError('Credenciales inválidas. Verifica tus datos e intenta de nuevo.');
       if (onError) onError();
     }
   };
@@ -57,9 +57,7 @@ const LoginForm = ({ onError, portal = 'paciente', onNavigate }) => {
           <HeartPulse size={32} className="text-white" />
         </div>
         <h1 className="text-2xl font-bold text-gray-800">EPS</h1>
-        <p className="text-sm text-gray-500 flex items-center justify-center gap-1">
-          {portal === 'medico' ? <><Stethoscope size={14} /> Portal del Médico</> : portal === 'admin' ? <><Shield size={14} /> Panel de Administración</> : 'Portal del Afiliado'}
-        </p>
+        <p className="text-sm text-gray-500">Accede con tu cuenta asignada</p>
       </div>
 
       {loginError && (

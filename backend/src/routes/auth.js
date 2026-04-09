@@ -11,14 +11,13 @@ const formatUser = require('../utils/formatUser');
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-only-for-local-dev';
 const MAX_ATTEMPTS = 5;
 const BLOCK_MINUTES = 15;
-const PORTAL_LABELS = { paciente: 'Portal del Afiliado', medico: 'Portal del Médico', admin: 'Panel de Administración' };
 
 router.post('/login', async (req, res, next) => {
   try {
-    const { cedula, password, portal } = req.body;
+    const { cedula, password } = req.body;
     if (!cedula || !password) return res.status(400).json({ error: 'Cedula y contrasena son requeridas' });
     const [[user]] = await pool.execute('SELECT * FROM users WHERE cedula = ?', [cedula]);
-    if (!user) return res.status(401).json({ error: 'Este numero de cedula no esta registrado. Deseas crear una cuenta?' });
+    if (!user) return res.status(401).json({ error: 'Credenciales inválidas' });
     if (!user.activo) return res.status(401).json({ error: 'Tu cuenta esta inactiva. Contacta a servicio al cliente' });
     if (user.bloqueado_hasta && new Date(user.bloqueado_hasta) > new Date())
       return res.status(401).json({ error: 'Tu cuenta ha sido bloqueada temporalmente. Intenta de nuevo en 15 minutos o recupera tu contrasena' });
@@ -29,11 +28,9 @@ router.post('/login', async (req, res, next) => {
         ? new Date(Date.now() + BLOCK_MINUTES * 60000).toISOString().slice(0, 19).replace('T', ' ')
         : null;
       await pool.execute('UPDATE users SET intentos_fallidos = ?, bloqueado_hasta = ? WHERE id = ?', [attempts, bloqueo, user.id]);
-      return res.status(401).json({ error: 'Usuario o contrasena incorrectos. Por favor, verifica tus datos' });
+      return res.status(401).json({ error: 'Credenciales inválidas' });
     }
     const userRole = user.role || 'paciente';
-    if (portal && portal !== userRole)
-      return res.status(403).json({ error: 'Esta cuenta no tiene acceso al ' + PORTAL_LABELS[portal] + '. Por favor ingresa por el ' + (PORTAL_LABELS[userRole] || 'portal correcto') + '.' });
     await pool.execute('UPDATE users SET intentos_fallidos = 0, bloqueado_hasta = NULL WHERE id = ?', [user.id]);
     const token = jwt.sign({ userId: user.id, cedula: user.cedula, role: userRole, medicoId: user.medico_id || null, jti: uuidv4() }, JWT_SECRET, { expiresIn: '24h' });
     res.json({ success: true, user: formatUser(user), token });

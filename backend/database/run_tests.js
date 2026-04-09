@@ -1,7 +1,7 @@
 
 const http = require('http');
 
-const BASE = 'http://localhost:3000/api';
+const BASE = 'http://localhost:3001/api';
 let passed = 0, failed = 0;
 let adminToken = '', medicoToken = '', pacienteToken = '';
 let createdAppointmentId = '', createdMetricId = '', createdAuthId = '';
@@ -63,19 +63,19 @@ async function run() {
   console.log('\n📋 2. Autenticación');
 
   // Login admin
-  let r = await req('POST', '/auth/login', { cedula: '9999999999', password: 'Admin123!' });
+  let r = await req('POST', '/auth/login', { cedula: '9999999999', password: 'Password123!' });
   check('Login admin → 200', r.status === 200, JSON.stringify(r.body));
   if (r.body.token) adminToken = r.body.token;
   check('Token recibido (admin)', !!adminToken);
 
   // Login medico
-  r = await req('POST', '/auth/login', { cedula: '1000100001', password: 'Medico123!' });
+  r = await req('POST', '/auth/login', { cedula: '1000100001', password: 'Password123!' });
   check('Login médico → 200', r.status === 200, JSON.stringify(r.body));
   if (r.body.token) medicoToken = r.body.token;
   check('Token recibido (médico)', !!medicoToken);
 
   // Login paciente
-  r = await req('POST', '/auth/login', { cedula: '1234567890', password: 'Paciente123!' });
+  r = await req('POST', '/auth/login', { cedula: '1234567890', password: 'Password123!' });
   check('Login paciente → 200', r.status === 200, JSON.stringify(r.body));
   if (r.body.token) pacienteToken = r.body.token;
   const pacienteLoginBody = r.body.user || r.body;
