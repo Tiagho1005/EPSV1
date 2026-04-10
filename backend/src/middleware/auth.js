@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const { isBlacklisted } = require('../services/tokenBlacklist');
 
 if (!process.env.JWT_SECRET) {
   if (process.env.NODE_ENV === 'production') {
@@ -10,21 +11,35 @@ if (!process.env.JWT_SECRET) {
 }
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-only-for-local-dev';
 
-// Blacklist en memoria de JTIs invalidados (logout).
-// En producción reemplazar por Redis u otro store persistente.
-const tokenBlacklist = new Set();
+/**
+ * Extrae el JWT de la request en orden de prioridad:
+ *  1. Cookie httpOnly `eps_token` — ruta segura principal.
+ *  2. Header Authorization: Bearer — fallback para tests y clientes API externos.
+ */
+const getTokenFromRequest = (req) => {
+  const cookieHeader = req.headers.cookie;
+  if (cookieHeader) {
+    const match = cookieHeader
+      .split(';')
+      .map(c => c.trim())
+      .find(c => c.startsWith('eps_token='));
+    if (match) return decodeURIComponent(match.slice('eps_token='.length));
+  }
 
-const addToBlacklist = (jti) => tokenBlacklist.add(jti);
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith('Bearer ')) return authHeader.slice(7);
 
-const authMiddleware = (req, res, next) => {
-  const header = req.headers.authorization;
-  if (!header || !header.startsWith('Bearer ')) {
+  return null;
+};
+
+const authMiddleware = async (req, res, next) => {
+  const token = getTokenFromRequest(req);
+  if (!token) {
     return res.status(401).json({ error: 'Token de autorización requerido' });
   }
-  const token = header.slice(7);
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    if (decoded.jti && tokenBlacklist.has(decoded.jti)) {
+    if (decoded.jti && await isBlacklisted(decoded.jti)) {
       return res.status(401).json({ error: 'Sesión cerrada. Inicia sesión nuevamente' });
     }
     req.user = decoded;
@@ -33,7 +48,5 @@ const authMiddleware = (req, res, next) => {
     return res.status(401).json({ error: 'Token inválido o expirado. Inicia sesión nuevamente' });
   }
 };
-
-authMiddleware.addToBlacklist = addToBlacklist;
 
 module.exports = authMiddleware;

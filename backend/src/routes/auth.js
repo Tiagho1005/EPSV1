@@ -5,12 +5,28 @@ const { v4: uuidv4 } = require('uuid');
 const { pool } = require('../config/mysql');
 const { sendRecoveryEmail } = require('../config/mailer');
 const auth = require('../middleware/auth');
+const { addToBlacklist } = require('../services/tokenBlacklist');
 const { validatePassword } = require('../utils/validators');
 const formatUser = require('../utils/formatUser');
+const {
+  verifyCodeLimiterMiddleware,
+  recordFailedAttempt,
+  resetAttempts,
+  getClientIp,
+} = require('../services/verifyCodeLimiter');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-only-for-local-dev';
 const MAX_ATTEMPTS = 5;
 const BLOCK_MINUTES = 15;
+
+// Atributos comunes de la cookie de sesión
+const cookieOptions = () => ({
+  httpOnly: true,                                      // inaccesible desde JavaScript
+  secure: process.env.NODE_ENV === 'production',       // solo HTTPS en prod
+  sameSite: 'Lax',                                     // bloquea CSRF en peticiones cross-site POST/PUT/DELETE
+  maxAge: 24 * 60 * 60 * 1000,                        // 24h (igual que la expiración del JWT)
+  path: '/',
+});
 
 router.post('/login', async (req, res, next) => {
   try {
@@ -21,6 +37,7 @@ router.post('/login', async (req, res, next) => {
     if (!user.activo) return res.status(401).json({ error: 'Tu cuenta esta inactiva. Contacta a servicio al cliente' });
     if (user.bloqueado_hasta && new Date(user.bloqueado_hasta) > new Date())
       return res.status(401).json({ error: 'Tu cuenta ha sido bloqueada temporalmente. Intenta de nuevo en 15 minutos o recupera tu contrasena' });
+
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
       const attempts = (user.intentos_fallidos || 0) + 1;
@@ -30,10 +47,36 @@ router.post('/login', async (req, res, next) => {
       await pool.execute('UPDATE users SET intentos_fallidos = ?, bloqueado_hasta = ? WHERE id = ?', [attempts, bloqueo, user.id]);
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
+
     const userRole = user.role || 'paciente';
     await pool.execute('UPDATE users SET intentos_fallidos = 0, bloqueado_hasta = NULL WHERE id = ?', [user.id]);
-    const token = jwt.sign({ userId: user.id, cedula: user.cedula, role: userRole, medicoId: user.medico_id || null, jti: uuidv4() }, JWT_SECRET, { expiresIn: '24h' });
-    res.json({ success: true, user: formatUser(user), token });
+
+    const token = jwt.sign(
+      { userId: user.id, cedula: user.cedula, role: userRole, medicoId: user.medico_id || null, jti: uuidv4() },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    // El JWT va en una cookie httpOnly — nunca en el cuerpo de la respuesta.
+    // JavaScript del cliente no puede leerlo ni robarlo vía XSS.
+    res.cookie('eps_token', token, cookieOptions());
+    res.json({ success: true, user: formatUser(user) });
+  } catch (err) { next(err); }
+});
+
+/**
+ * GET /auth/me
+ * Devuelve el usuario de la sesión activa.
+ * El frontend lo llama al cargar la app para restaurar la sesión
+ * sin necesidad de guardar nada en localStorage.
+ */
+router.get('/me', auth, async (req, res, next) => {
+  try {
+    const [[user]] = await pool.execute('SELECT * FROM users WHERE id = ?', [req.user.userId]);
+    if (!user || !user.activo) {
+      return res.status(401).json({ error: 'Sesión inválida' });
+    }
+    res.json({ success: true, user: formatUser(user) });
   } catch (err) { next(err); }
 });
 
@@ -75,12 +118,33 @@ router.post('/recover-password', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/verify-code', async (req, res, next) => {
+router.post('/verify-code', verifyCodeLimiterMiddleware, async (req, res, next) => {
   try {
     const { identifier, code } = req.body;
-    const [[user]] = await pool.execute('SELECT * FROM users WHERE (cedula = ? OR email = ?) AND reset_code = ?', [identifier, identifier, code]);
-    if (!user) return res.status(400).json({ error: 'El codigo es incorrecto' });
-    if (new Date(user.reset_code_expires) < new Date()) return res.status(400).json({ error: 'El codigo ha expirado. Solicita uno nuevo' });
+    const ip = getClientIp(req);
+
+    // Buscar usuario + código en una sola consulta (respuesta genérica en caso de fallo
+    // para no revelar si el identificador existe o no en el sistema).
+    const [[user]] = await pool.execute(
+      'SELECT id, reset_code, reset_code_expires FROM users WHERE (cedula = ? OR email = ?) AND reset_code IS NOT NULL',
+      [identifier, identifier]
+    );
+
+    const codeValid = user && user.reset_code === code;
+    const notExpired = codeValid && new Date(user.reset_code_expires) >= new Date();
+
+    if (!codeValid || !notExpired) {
+      // Registrar intento fallido (se aplica tanto si el usuario no existe como si el código es incorrecto/expirado)
+      await recordFailedAttempt(ip, identifier);
+      const msg = !codeValid
+        ? 'El código es incorrecto'
+        : 'El código ha expirado. Solicita uno nuevo';
+      return res.status(400).json({ error: msg });
+    }
+
+    // Éxito: limpiar el contador para no penalizar futuros flujos
+    await resetAttempts(ip, identifier);
+
     const resetToken = jwt.sign({ userId: user.id, purpose: 'reset' }, JWT_SECRET, { expiresIn: '10m' });
     res.json({ success: true, resetToken });
   } catch (err) { next(err); }
@@ -107,9 +171,21 @@ router.post('/reset-password', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/logout', auth, (req, res) => {
-  if (req.user?.jti) auth.addToBlacklist(req.user.jti);
-  res.json({ success: true });
+router.post('/logout', auth, async (req, res, next) => {
+  try {
+    if (req.user?.jti && req.user?.exp) {
+      const expiresAt = new Date(req.user.exp * 1000).toISOString().slice(0, 19).replace('T', ' ');
+      await addToBlacklist(req.user.jti, expiresAt);
+    }
+    // Eliminar la cookie de sesión — el navegador la descarta inmediatamente
+    res.clearCookie('eps_token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'Lax',
+      path: '/',
+    });
+    res.json({ success: true });
+  } catch (err) { next(err); }
 });
 
 module.exports = router;

@@ -15,6 +15,7 @@ const RecoverPasswordForm = ({ onNavigate }) => {
   const { showToast } = useToast();
   const [step, setStep] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [resetToken, setResetToken] = useState(null);
   const [codeValues, setCodeValues] = useState(['', '', '', '', '', '']);
   const [countdown, setCountdown] = useState(60);
   const [canResend, setCanResend] = useState(false);
@@ -73,7 +74,8 @@ const RecoverPasswordForm = ({ onNavigate }) => {
     if (code.length !== 6) return;
     setIsLoading(true);
     try {
-      await api.verifyCode(code);
+      const data = await api.verifyCode(values.identifier, code);
+      setResetToken(data.resetToken);
       setStep(2);
     } catch (error) {
       showToast({ type: 'error', title: 'Error', message: error.message });
@@ -86,7 +88,7 @@ const RecoverPasswordForm = ({ onNavigate }) => {
     if (errors.newPassword || errors.confirmNewPassword) return;
     setIsLoading(true);
     try {
-      await api.resetPassword(values.newPassword);
+      await api.resetPassword(resetToken, values.newPassword);
       showToast({ type: 'success', title: '¡Listo!', message: 'Tu contraseña ha sido actualizada exitosamente' });
       if (onNavigate) onNavigate('login'); else navigate(ROUTES.LOGIN);
     } catch (error) {

@@ -1,9 +1,12 @@
+// ============================================================
+//  Reminder Scheduler — Persistente en MySQL
+//  Los recordatorios enviados se registran en `reminder_sent_log`
+//  para sobrevivir reinicios del servidor.
+// ============================================================
 const cron = require('node-cron');
 const { pool } = require('../config/mysql');
 const { sendMedicationReminder } = require('../config/mailer');
 const logger = require('../config/logger');
-
-const sentReminders = new Map();
 
 const fmtTime = (t) => {
   if (!t) return null;
@@ -13,10 +16,34 @@ const fmtTime = (t) => {
   return h + ':' + m;
 };
 
-const fmtDate = (d) => {
-  if (!d) return null;
-  if (d instanceof Date) return d.toISOString().split('T')[0];
-  return String(d);
+// Crea la tabla de log si no existe (idempotente, se ejecuta al arrancar)
+const initTable = async () => {
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS reminder_sent_log (
+      reminder_key VARCHAR(150) NOT NULL,
+      sent_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (reminder_key)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+  `);
+  logger.info('[Reminder] Tabla reminder_sent_log verificada');
+};
+
+// Comprueba si un recordatorio ya fue enviado hoy
+const wasAlreadySent = async (key) => {
+  const [rows] = await pool.execute(
+    'SELECT 1 FROM reminder_sent_log WHERE reminder_key = ?',
+    [key]
+  );
+  return rows.length > 0;
+};
+
+// Marca un recordatorio como enviado en la BD
+const markAsSent = async (key) => {
+  // INSERT IGNORE evita errores si dos workers concurrentes intentan insertar la misma key
+  await pool.execute(
+    'INSERT IGNORE INTO reminder_sent_log (reminder_key) VALUES (?)',
+    [key]
+  );
 };
 
 const checkAndSendReminders = async () => {
@@ -38,25 +65,24 @@ const checkAndSendReminders = async () => {
       [today]
     );
 
-    const sendQueue = [];
-
     for (const row of rows) {
       const horario = fmtTime(row.hora);
       if (!horario) continue;
+
       const [hStr, mStr] = horario.split(':');
       const scheduleMinutes = parseInt(hStr, 10) * 60 + parseInt(mStr, 10);
       const advanceMinutes  = row.reminder_advance_min ?? 15;
       const targetMinutes   = scheduleMinutes - advanceMinutes;
       const diff = currentMinutes - targetMinutes;
+
+      // Ventana de envío: entre 5 min antes y 10 min después del momento objetivo
       if (diff < -5 || diff >= 10) continue;
 
       const key = `${row.user_id}-${row.id}-${horario}-${today}`;
-      if (sentReminders.has(key)) continue;
 
-      sendQueue.push({ row, horario, key });
-    }
+      // Verificar en BD si ya fue enviado (persiste entre reinicios)
+      if (await wasAlreadySent(key)) continue;
 
-    for (const { row, horario, key } of sendQueue) {
       try {
         await sendMedicationReminder({
           to: row.email,
@@ -66,7 +92,8 @@ const checkAndSendReminders = async () => {
           horario,
           instrucciones: row.instrucciones || '',
         });
-        sentReminders.set(key, true);
+
+        await markAsSent(key);
         logger.info(`[Reminder] Enviado a ${row.email}: ${row.nombre} ${horario}`);
       } catch (err) {
         logger.error(`[Reminder] Error enviando a ${row.email}: ${err.message}`);
@@ -77,12 +104,25 @@ const checkAndSendReminders = async () => {
   }
 };
 
-const startReminderScheduler = () => {
+// Limpia entradas antiguas (más de 2 días) para no acumular registros indefinidamente
+const cleanupOldLogs = async () => {
+  try {
+    const [result] = await pool.execute(
+      'DELETE FROM reminder_sent_log WHERE sent_at < DATE_SUB(NOW(), INTERVAL 2 DAY)'
+    );
+    logger.info(`[Reminder] Limpieza completada: ${result.affectedRows} entradas eliminadas`);
+  } catch (err) {
+    logger.error(`[Reminder] Error en cleanupOldLogs: ${err.message}`);
+  }
+};
+
+const startReminderScheduler = async () => {
+  await initTable();
+  // Verificar y enviar cada 15 minutos
   cron.schedule('*/15 * * * *', checkAndSendReminders);
-  cron.schedule('0 0 * * *', () => {
-    sentReminders.clear();
-    logger.info('[Reminder] Mapa de recordatorios limpiado');
-  });
+  // Limpiar log de días anteriores a medianoche
+  cron.schedule('0 0 * * *', cleanupOldLogs);
+  logger.info('[Reminder] Scheduler iniciado con persistencia en BD');
 };
 
 module.exports = { startReminderScheduler };

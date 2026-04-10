@@ -5,15 +5,17 @@ const app = require('./src/app');
 
 const PORT = process.env.PORT || 3001;
 
-testConnection().then(() => {
+testConnection().then(async () => {
   app.listen(PORT, () => {
     logger.info(`EPS Backend corriendo en http://localhost:${PORT}`);
     logger.info(`Health check: http://localhost:${PORT}/api/health`);
   });
 
+  const { startBlacklistService } = require('./src/services/tokenBlacklist');
+  await startBlacklistService();
+
   const { startReminderScheduler } = require('./src/services/reminderScheduler');
-  startReminderScheduler();
-  logger.info('Scheduler de recordatorios iniciado');
+  await startReminderScheduler();
 }).catch(err => {
   logger.error('Error iniciando base de datos', { stack: err.stack });
   process.exit(1);
