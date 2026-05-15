@@ -16,6 +16,9 @@ testConnection().then(async () => {
 
   const { startReminderScheduler } = require('./src/services/reminderScheduler');
   await startReminderScheduler();
+
+  const { startLimiterService } = require('./src/services/verifyCodeLimiter');
+  await startLimiterService();
 }).catch(err => {
   logger.error('Error iniciando base de datos', { stack: err.stack });
   process.exit(1);

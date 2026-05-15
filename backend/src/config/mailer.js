@@ -65,7 +65,7 @@ const sendRecoveryEmail = async ({ to, nombre, code }) => {
   });
 
   // En desarrollo sin SMTP real, mostrar URL de preview de Ethereal
-  if (!isConfigured) {
+  if (!isConfigured || (process.env.EMAIL_HOST && process.env.EMAIL_HOST.includes('ethereal'))) {
     console.log(`[DEV] Email de recuperación enviado. Preview: ${nodemailer.getTestMessageUrl(info)}`);
   }
 
@@ -116,7 +116,7 @@ const sendAppointmentConfirmation = async ({ to, nombre, appointment }) => {
     `,
   });
 
-  if (!isConfigured) {
+  if (!isConfigured || (process.env.EMAIL_HOST && process.env.EMAIL_HOST.includes('ethereal'))) {
     console.log(`[DEV] Email de confirmación de cita enviado. Preview: ${nodemailer.getTestMessageUrl(info)}`);
   }
 
@@ -169,7 +169,7 @@ const sendConsultaCompletada = async ({ to, nombre, appointment }) => {
     `,
   });
 
-  if (!isConfigured) {
+  if (!isConfigured || (process.env.EMAIL_HOST && process.env.EMAIL_HOST.includes('ethereal'))) {
     console.log(`[DEV] Email de consulta completada enviado. Preview: ${nodemailer.getTestMessageUrl(info)}`);
   }
 
@@ -228,7 +228,7 @@ const sendRenewalResult = async ({ to, nombre, medicamento, aprobada, notaMedico
     `,
   });
 
-  if (!isConfigured) {
+  if (!isConfigured || (process.env.EMAIL_HOST && process.env.EMAIL_HOST.includes('ethereal'))) {
     console.log(`[DEV] Email de resultado de renovación enviado. Preview: ${nodemailer.getTestMessageUrl(info)}`);
   }
 
@@ -295,7 +295,7 @@ const sendAuthorizationResult = async ({ to, nombre, descripcion, tipo, aprobada
     `,
   });
 
-  if (!isConfigured) {
+  if (!isConfigured || (process.env.EMAIL_HOST && process.env.EMAIL_HOST.includes('ethereal'))) {
     console.log(`[DEV] Email de resultado de autorización enviado. Preview: ${nodemailer.getTestMessageUrl(info)}`);
   }
 
@@ -348,7 +348,7 @@ const sendMedicationReminder = async ({ to, nombre, medicamento, dosis, horario,
     `,
   });
 
-  if (!isConfigured) {
+  if (!isConfigured || (process.env.EMAIL_HOST && process.env.EMAIL_HOST.includes('ethereal'))) {
     console.log(`[DEV] Email de recordatorio de medicamento enviado. Preview: ${nodemailer.getTestMessageUrl(info)}`);
   }
 

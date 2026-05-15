@@ -179,9 +179,7 @@ const RecoverPasswordForm = ({ onNavigate }) => {
               <>Reenviar código en <span className="font-semibold text-primary-600">{countdown}s</span></>
             )}
           </p>
-          <p className="text-center text-xs text-gray-400 mb-4">
-            Código de prueba: <span className="font-mono font-bold">123456</span>
-          </p>
+
           <Button
             fullWidth
             loading={isLoading}
