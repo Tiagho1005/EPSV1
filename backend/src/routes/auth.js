@@ -95,12 +95,33 @@ router.post('/register', async (req, res, next) => {
       finalNombre = p[0];
       finalApellido = p.slice(1).join(' ');
     }
-    const id = uuidv4();
+    const [[{maxId}]] = await pool.execute('SELECT COALESCE(MAX(id), 0) + 1 AS maxId FROM users');
+    const tempId = maxId + 1000000; // Temporary ID to avoid conflicts
+    
     const passwordHash = await bcrypt.hash(password, 10);
     await pool.execute(
       "INSERT INTO users (id,cedula,nombre,apellido,email,celular,fecha_nacimiento,departamento,municipio,direccion,foto_url,password_hash,role,activo,intentos_fallidos,fecha_registro) VALUES (?,?,?,?,?,?,?,?,?,?,NULL,?,'paciente',1,0,CURDATE())",
-      [id, cedula, finalNombre, finalApellido, email, celular || null, fechaNacimiento || null, departamento || '', municipio || '', direccion || '', passwordHash]
+      [tempId, cedula, finalNombre, finalApellido, email, celular || null, fechaNacimiento || null, departamento || '', municipio || '', direccion || '', passwordHash]
     );
+
+    // --- REORGANIZATION LOGIC ---
+    // Paso 3 & 4: Reasignar IDs consecutivos a TODOS los usuarios para mantener el orden (admin -> medico -> paciente)
+    // Desplazamos todos los IDs temporalmente para liberar el espacio (1, 2, 3...)
+    await pool.execute("UPDATE users SET id = id + 1000000 ORDER BY id DESC"); 
+    await pool.execute("SET @new_id = 0");
+    await pool.execute(`
+      UPDATE users 
+      SET id = (@new_id := COALESCE(@new_id, 0) + 1)
+      ORDER BY 
+          CASE role
+              WHEN 'admin' THEN 1
+              WHEN 'medico' THEN 2
+              WHEN 'paciente' THEN 3
+              ELSE 4
+          END,
+          id
+    `);
+
     res.status(201).json({ success: true, message: 'Cuenta creada exitosamente!' });
   } catch (err) { next(err); }
 });

@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS municipalities (
 
 
 CREATE TABLE IF NOT EXISTS users (
-  id                   VARCHAR(36)  NOT NULL,
+  id                   INT UNSIGNED NOT NULL,
   cedula               VARCHAR(20)  NOT NULL,
   nombre               VARCHAR(100) NOT NULL,
   apellido             VARCHAR(100) NOT NULL,
@@ -74,14 +74,14 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE IF NOT EXISTS doctors (
   id              VARCHAR(36)        NOT NULL,
-  user_id         VARCHAR(36)        NULL,
+  user_id         INT UNSIGNED       NULL,
   especialidad_id VARCHAR(50)        NOT NULL,
   nombre          VARCHAR(150)       NOT NULL,
   foto            VARCHAR(500)       NULL,
   experiencia     TINYINT UNSIGNED   NOT NULL DEFAULT 0,   
   rating          DECIMAL(3,2)       NOT NULL DEFAULT 5.00,
   PRIMARY KEY (id),
-  FOREIGN KEY (user_id)         REFERENCES users(id)       ON DELETE SET NULL,
+  FOREIGN KEY (user_id)         REFERENCES users(id)       ON DELETE SET NULL ON UPDATE CASCADE,
   FOREIGN KEY (especialidad_id) REFERENCES specialties(id) ON DELETE RESTRICT
 );
 
@@ -113,7 +113,7 @@ CREATE TABLE IF NOT EXISTS doctor_disponibilidad (
 
 CREATE TABLE IF NOT EXISTS appointments (
   id                  VARCHAR(36)  NOT NULL,
-  user_id             VARCHAR(36)  NOT NULL,
+  user_id             INT UNSIGNED NOT NULL,
   especialidad_id     VARCHAR(50)  NOT NULL,
   especialidad_nombre VARCHAR(100) NOT NULL,   -- desnormalizado para rendimiento
   medico_id           VARCHAR(36)  NOT NULL,
@@ -129,7 +129,7 @@ CREATE TABLE IF NOT EXISTS appointments (
   motivo_cancelacion  TEXT         NULL,
   created_at          DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  FOREIGN KEY (user_id)         REFERENCES users(id)       ON DELETE CASCADE,
+  FOREIGN KEY (user_id)         REFERENCES users(id)       ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY (especialidad_id) REFERENCES specialties(id) ON DELETE RESTRICT,
   FOREIGN KEY (medico_id)       REFERENCES doctors(id)     ON DELETE RESTRICT,
   FOREIGN KEY (sede_id)         REFERENCES locations(id)   ON DELETE RESTRICT,
@@ -143,7 +143,7 @@ CREATE TABLE IF NOT EXISTS appointments (
 
 CREATE TABLE IF NOT EXISTS medications (
   id           VARCHAR(36)  NOT NULL,
-  user_id      VARCHAR(36)  NOT NULL,
+  user_id      INT UNSIGNED NOT NULL,
   nombre       VARCHAR(150) NOT NULL,
   dosis        VARCHAR(50)  NOT NULL,
   presentacion ENUM('Tableta','Capsula','Jarabe','Inyeccion','Crema','Gotas','Otro') NOT NULL,
@@ -154,7 +154,7 @@ CREATE TABLE IF NOT EXISTS medications (
   renovable    TINYINT(1)   NOT NULL DEFAULT 0,
   instrucciones TEXT        NULL,
   PRIMARY KEY (id),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
   INDEX idx_med_user (user_id)
 );
 
@@ -169,25 +169,25 @@ CREATE TABLE IF NOT EXISTS medication_horarios (
 CREATE TABLE IF NOT EXISTS medication_taken_log (
   id            VARCHAR(36) NOT NULL,
   medication_id VARCHAR(36) NOT NULL,
-  user_id       VARCHAR(36) NOT NULL,
+  user_id       INT UNSIGNED NOT NULL,
   horario       TIME        NOT NULL,
   taken_at      DATETIME    NOT NULL,
   fecha         DATE        NOT NULL,
   PRIMARY KEY (id),
   FOREIGN KEY (medication_id) REFERENCES medications(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id)       REFERENCES users(id)       ON DELETE CASCADE,
+  FOREIGN KEY (user_id)       REFERENCES users(id)       ON DELETE CASCADE ON UPDATE CASCADE,
   INDEX idx_log_user_fecha (user_id, fecha)
 );
 
 CREATE TABLE IF NOT EXISTS renewal_requests (
   id            VARCHAR(36) NOT NULL,
-  user_id       VARCHAR(36) NOT NULL,
+  user_id       INT UNSIGNED NOT NULL,
   medication_id VARCHAR(36) NOT NULL,
   medico_id     VARCHAR(36) NOT NULL,
   estado        ENUM('pendiente','aprobada','rechazada') NOT NULL DEFAULT 'pendiente',
   created_at    DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  FOREIGN KEY (user_id)       REFERENCES users(id)       ON DELETE CASCADE,
+  FOREIGN KEY (user_id)       REFERENCES users(id)       ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY (medication_id) REFERENCES medications(id) ON DELETE CASCADE,
   FOREIGN KEY (medico_id)     REFERENCES doctors(id)     ON DELETE RESTRICT
 );
@@ -196,7 +196,7 @@ CREATE TABLE IF NOT EXISTS renewal_requests (
 
 CREATE TABLE IF NOT EXISTS medical_history (
   id          VARCHAR(36)  NOT NULL,
-  user_id     VARCHAR(36)  NOT NULL,
+  user_id     INT UNSIGNED NOT NULL,
   fecha       DATE         NOT NULL,
   especialidad VARCHAR(100) NULL,
   medico      VARCHAR(150) NULL,
@@ -204,7 +204,7 @@ CREATE TABLE IF NOT EXISTS medical_history (
   diagnostico TEXT         NULL,
   notas       TEXT         NULL,
   PRIMARY KEY (id),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
   INDEX idx_hist_user (user_id)
 );
 
@@ -228,7 +228,7 @@ CREATE TABLE IF NOT EXISTS medical_history_examenes (
 
 CREATE TABLE IF NOT EXISTS health_metrics (
   id               VARCHAR(36)  NOT NULL,
-  user_id          VARCHAR(36)  NOT NULL,
+  user_id          INT UNSIGNED NOT NULL,
   tipo             ENUM(
                      'presion_arterial',
                      'glucosa',
@@ -248,7 +248,7 @@ CREATE TABLE IF NOT EXISTS health_metrics (
   hora             TIME         NULL,
   created_at       DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,
   INDEX idx_hm_user_tipo (user_id, tipo),
   INDEX idx_hm_fecha     (fecha)
 );
@@ -257,7 +257,7 @@ CREATE TABLE IF NOT EXISTS health_metrics (
 
 CREATE TABLE IF NOT EXISTS authorizations (
   id             VARCHAR(36)  NOT NULL,
-  user_id        VARCHAR(36)  NOT NULL,
+  user_id        INT UNSIGNED NOT NULL,
   medico_id      VARCHAR(36)  NOT NULL,
   medico_nombre  VARCHAR(150) NULL,
   tipo           ENUM('examen','procedimiento','consulta_especialista','imagen','cirugia') NOT NULL,
@@ -267,7 +267,7 @@ CREATE TABLE IF NOT EXISTS authorizations (
   motivo_rechazo TEXT         NULL,
   created_at     DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (id),
-  FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE,
+  FOREIGN KEY (user_id)   REFERENCES users(id)   ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY (medico_id) REFERENCES doctors(id) ON DELETE RESTRICT,
   INDEX idx_auth_user   (user_id),
   INDEX idx_auth_medico (medico_id),
