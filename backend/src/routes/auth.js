@@ -82,48 +82,105 @@ router.get('/me', auth, async (req, res, next) => {
 
 router.post('/register', async (req, res, next) => {
   try {
-    const { cedula, password, nombre, apellido, nombreCompleto, email, celular, fechaNacimiento, departamento, municipio, direccion } = req.body;
+    const {
+      cedula,
+      password,
+      nombre,
+      apellido,
+      nombreCompleto,
+      email,
+      celular,
+      fechaNacimiento,
+      departamento,
+      municipio,
+      direccion,
+    } = req.body;
+
     const pwError = validatePassword(password);
     if (pwError) return res.status(400).json({ error: pwError });
-    const [[ex1]] = await pool.execute('SELECT id FROM users WHERE cedula = ?', [cedula]);
-    if (ex1) return res.status(400).json({ error: 'Esta cedula ya esta registrada. Deseas iniciar sesion?' });
-    const [[ex2]] = await pool.execute('SELECT id FROM users WHERE email = ?', [email]);
-    if (ex2) return res.status(400).json({ error: 'Este correo ya esta registrado' });
-    let finalNombre = nombre, finalApellido = apellido || '';
-    if (nombreCompleto && !nombre) {
-      const p = nombreCompleto.trim().split(' ');
-      finalNombre = p[0];
-      finalApellido = p.slice(1).join(' ');
-    }
-    const [[{maxId}]] = await pool.execute('SELECT COALESCE(MAX(id), 0) + 1 AS maxId FROM users');
-    const tempId = maxId + 1000000; // Temporary ID to avoid conflicts
-    
-    const passwordHash = await bcrypt.hash(password, 10);
-    await pool.execute(
-      "INSERT INTO users (id,cedula,nombre,apellido,email,celular,fecha_nacimiento,departamento,municipio,direccion,foto_url,password_hash,role,activo,intentos_fallidos,fecha_registro) VALUES (?,?,?,?,?,?,?,?,?,?,NULL,?,'paciente',1,0,CURDATE())",
-      [tempId, cedula, finalNombre, finalApellido, email, celular || null, fechaNacimiento || null, departamento || '', municipio || '', direccion || '', passwordHash]
+
+    const [[ex1]] = await pool.execute(
+      'SELECT id FROM users WHERE cedula = ?',
+      [cedula]
     );
 
-    // --- REORGANIZATION LOGIC ---
-    // Paso 3 & 4: Reasignar IDs consecutivos a TODOS los usuarios para mantener el orden (admin -> medico -> paciente)
-    // Desplazamos todos los IDs temporalmente para liberar el espacio (1, 2, 3...)
-    await pool.execute("UPDATE users SET id = id + 1000000 ORDER BY id DESC"); 
-    await pool.execute("SET @new_id = 0");
-    await pool.execute(`
-      UPDATE users 
-      SET id = (@new_id := COALESCE(@new_id, 0) + 1)
-      ORDER BY 
-          CASE role
-              WHEN 'admin' THEN 1
-              WHEN 'medico' THEN 2
-              WHEN 'paciente' THEN 3
-              ELSE 4
-          END,
-          id
-    `);
+    if (ex1) {
+      return res.status(400).json({
+        error: 'Esta cedula ya esta registrada. Deseas iniciar sesion?',
+      });
+    }
 
-    res.status(201).json({ success: true, message: 'Cuenta creada exitosamente!' });
-  } catch (err) { next(err); }
+    const [[ex2]] = await pool.execute(
+      'SELECT id FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (ex2) {
+      return res.status(400).json({
+        error: 'Este correo ya esta registrado',
+      });
+    }
+
+    let finalNombre = nombre;
+    let finalApellido = apellido || '';
+
+    if (nombreCompleto && !nombre) {
+      const partes = nombreCompleto.trim().split(' ');
+      finalNombre = partes[0];
+      finalApellido = partes.slice(1).join(' ');
+    }
+
+    const [[nextIdRow]] = await pool.execute(
+      'SELECT COALESCE(MAX(id), 0) + 1 AS next_id FROM users'
+    );
+
+    const newId = nextIdRow.next_id;
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    await pool.execute(
+      `INSERT INTO users (
+        id,
+        cedula,
+        nombre,
+        apellido,
+        email,
+        celular,
+        fecha_nacimiento,
+        departamento,
+        municipio,
+        direccion,
+        foto_url,
+        password_hash,
+        role,
+        activo,
+        intentos_fallidos,
+        fecha_registro
+      ) VALUES (
+        ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, 'paciente', 1, 0, CURRENT_DATE
+      )`,
+      [
+        newId,
+        cedula,
+        finalNombre,
+        finalApellido,
+        email,
+        celular || null,
+        fechaNacimiento || null,
+        departamento || '',
+        municipio || '',
+        direccion || '',
+        passwordHash,
+      ]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Cuenta creada exitosamente!',
+    });
+  } catch (err) {
+    next(err);
+  }
 });
 
 router.post('/recover-password', async (req, res, next) => {

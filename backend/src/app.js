@@ -8,7 +8,21 @@ const sanitize = require('./middleware/sanitize');
 const app = express();
 
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
-app.use(cors({ origin: /^http:\/\/localhost:\d+$/, credentials: true }));
+const allowedOrigins = [
+  'http://localhost:5173',
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
+app.use(cors({
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    return callback(new Error('Origen no permitido por CORS'));
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: '2mb' }));
 
 const generalLimiter = rateLimit({
